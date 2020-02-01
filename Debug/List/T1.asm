@@ -1091,7 +1091,7 @@ __START_OF_CODE:
 ;INTERRUPT VECTORS
 	RJMP __RESET
 	RJMP 0xC00
-	RJMP 0xC00
+	RJMP _ext_int1_isr
 	RJMP 0xC00
 	RJMP 0xC00
 	RJMP 0xC00
@@ -1174,7 +1174,7 @@ __CLEAR_SRAM:
 	#endif
 ;#include <io.h>
 ;#include <delay.h>
-;//#include <interrupt.h>
+;
 ;
 ;
 ;void initialization_defolt()
@@ -1206,16 +1206,18 @@ _initialization_defolt:
 ; 0000 0018 
 ; 0000 0019     // Port D initialization
 ; 0000 001A     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=In Bit2=In Bit1=In Bit0=In
-; 0000 001B     DDRD=(0<<DDD7) | (0<<DDD6) | (0<<DDD5) | (0<<DDD4) | (0<<DDD3) | (0<<DDD2) | (0<<DDD1) | (0<<DDD0);
+; 0000 001B     DDRD=(1<<DDD7) | (0<<DDD6) | (0<<DDD5) | (0<<DDD4) | (0<<DDD3) | (0<<DDD2) | (0<<DDD1) | (0<<DDD0);
+	LDI  R30,LOW(128)
 	OUT  0x11,R30
 ; 0000 001C     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
-; 0000 001D     PORTD=(0<<PORTD7) | (0<<PORTD6) | (0<<PORTD5) | (0<<PORTD4) | (0<<PORTD3) | (0<<PORTD2) | (0<<PORTD1) | (0<<PORTD0);
+; 0000 001D     PORTD=(1<<PORTD7) | (0<<PORTD6) | (0<<PORTD5) | (0<<PORTD4) | (0<<PORTD3) | (0<<PORTD2) | (0<<PORTD1) | (0<<PORTD0);
 	OUT  0x12,R30
 ; 0000 001E 
 ; 0000 001F     // Timer/Counter 0 initialization
 ; 0000 0020     // Clock source: System Clock
 ; 0000 0021     // Clock value: Timer 0 Stopped
 ; 0000 0022     TCCR0=(0<<CS02) | (0<<CS01) | (0<<CS00);
+	LDI  R30,LOW(0)
 	OUT  0x33,R30
 ; 0000 0023     TCNT0=0x00;
 	OUT  0x32,R30
@@ -1273,120 +1275,195 @@ _initialization_defolt:
 ; 0000 0049     // External Interrupt(s) initialization
 ; 0000 004A     // INT0: Off
 ; 0000 004B     // INT1: Off
-; 0000 004C     MCUCR=(0<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
+; 0000 004C     MCUCR=(1<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
+	LDI  R30,LOW(8)
 	OUT  0x35,R30
-; 0000 004D 
-; 0000 004E     // USART initialization
-; 0000 004F     // USART disabled
-; 0000 0050     UCSRB=(0<<RXCIE) | (0<<TXCIE) | (0<<UDRIE) | (0<<RXEN) | (0<<TXEN) | (0<<UCSZ2) | (0<<RXB8) | (0<<TXB8);
+; 0000 004D     GICR|=(1<<INT1) | (0<<INT0);
+	IN   R30,0x3B
+	ORI  R30,0x80
+	OUT  0x3B,R30
+; 0000 004E     MCUCR=(1<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
+	LDI  R30,LOW(8)
+	OUT  0x35,R30
+; 0000 004F     GIFR=(1<<INTF1) | (0<<INTF0);
+	LDI  R30,LOW(128)
+	OUT  0x3A,R30
+; 0000 0050 
+; 0000 0051     // USART initialization
+; 0000 0052     // USART disabled
+; 0000 0053     UCSRB=(0<<RXCIE) | (0<<TXCIE) | (0<<UDRIE) | (0<<RXEN) | (0<<TXEN) | (0<<UCSZ2) | (0<<RXB8) | (0<<TXB8);
+	LDI  R30,LOW(0)
 	OUT  0xA,R30
-; 0000 0051 
-; 0000 0052     // Analog Comparator initialization
-; 0000 0053     // Analog Comparator: Off
-; 0000 0054     // The Analog Comparator's positive input is
-; 0000 0055     // connected to the AIN0 pin
-; 0000 0056     // The Analog Comparator's negative input is
-; 0000 0057     // connected to the AIN1 pin
-; 0000 0058     ACSR=(1<<ACD) | (0<<ACBG) | (0<<ACO) | (0<<ACI) | (0<<ACIE) | (0<<ACIC) | (0<<ACIS1) | (0<<ACIS0);
+; 0000 0054 
+; 0000 0055     // Analog Comparator initialization
+; 0000 0056     // Analog Comparator: Off
+; 0000 0057     // The Analog Comparator's positive input is
+; 0000 0058     // connected to the AIN0 pin
+; 0000 0059     // The Analog Comparator's negative input is
+; 0000 005A     // connected to the AIN1 pin
+; 0000 005B     ACSR=(1<<ACD) | (0<<ACBG) | (0<<ACO) | (0<<ACI) | (0<<ACIE) | (0<<ACIC) | (0<<ACIS1) | (0<<ACIS0);
 	LDI  R30,LOW(128)
 	OUT  0x8,R30
-; 0000 0059     SFIOR=(0<<ACME);
+; 0000 005C     SFIOR=(0<<ACME);
 	LDI  R30,LOW(0)
 	OUT  0x30,R30
-; 0000 005A 
-; 0000 005B     // ADC initialization
-; 0000 005C     // ADC disabled
-; 0000 005D     ADCSRA=(0<<ADEN) | (0<<ADSC) | (0<<ADFR) | (0<<ADIF) | (0<<ADIE) | (0<<ADPS2) | (0<<ADPS1) | (0<<ADPS0);
+; 0000 005D 
+; 0000 005E     // ADC initialization
+; 0000 005F     // ADC disabled
+; 0000 0060     ADCSRA=(0<<ADEN) | (0<<ADSC) | (0<<ADFR) | (0<<ADIF) | (0<<ADIE) | (0<<ADPS2) | (0<<ADPS1) | (0<<ADPS0);
 	OUT  0x6,R30
-; 0000 005E 
-; 0000 005F     // SPI initialization
-; 0000 0060     // SPI disabled
-; 0000 0061     SPCR=(0<<SPIE) | (0<<SPE) | (0<<DORD) | (0<<MSTR) | (0<<CPOL) | (0<<CPHA) | (0<<SPR1) | (0<<SPR0);
+; 0000 0061 
+; 0000 0062     // SPI initialization
+; 0000 0063     // SPI disabled
+; 0000 0064     SPCR=(0<<SPIE) | (0<<SPE) | (0<<DORD) | (0<<MSTR) | (0<<CPOL) | (0<<CPHA) | (0<<SPR1) | (0<<SPR0);
 	OUT  0xD,R30
-; 0000 0062 
-; 0000 0063     // TWI initialization
-; 0000 0064     // TWI disabled
-; 0000 0065     TWCR=(0<<TWEA) | (0<<TWSTA) | (0<<TWSTO) | (0<<TWEN) | (0<<TWIE);
+; 0000 0065 
+; 0000 0066     // TWI initialization
+; 0000 0067     // TWI disabled
+; 0000 0068     TWCR=(0<<TWEA) | (0<<TWSTA) | (0<<TWSTO) | (0<<TWEN) | (0<<TWIE);
 	OUT  0x36,R30
-; 0000 0066 }
+; 0000 0069 }
 	RET
 ; .FEND
 ;
 ;void init_pwm()
-; 0000 0069 {
+; 0000 006C {
 _init_pwm:
 ; .FSTART _init_pwm
-; 0000 006A     ASSR = 0x00;
+; 0000 006D     ASSR = 0x00;
 	LDI  R30,LOW(0)
 	OUT  0x22,R30
-; 0000 006B     TCCR2 = 0b01101010;
+; 0000 006E     TCCR2 = 0b01101010;
 	LDI  R30,LOW(106)
 	RCALL SUBOPT_0x0
-; 0000 006C     TCNT2 = 0x00;
-; 0000 006D     OCR2 = 0x00;
-; 0000 006E }
+; 0000 006F     TCNT2 = 0x00;
+; 0000 0070     OCR2 = 0x00;
+; 0000 0071 }
+	RET
+; .FEND
+;
+;void check_PC()
+; 0000 0074 {
+_check_PC:
+; .FSTART _check_PC
+; 0000 0075     //int i;
+; 0000 0076     //for(i = 0; i < 8; i++)
+; 0000 0077     //{
+; 0000 0078         if(~PINC & (1<<1))
+	IN   R30,0x13
+	COM  R30
+	ANDI R30,LOW(0x2)
+	BREQ _0x3
+; 0000 0079             {
+; 0000 007A             PORTD ^= (1<<7);
+	RCALL SUBOPT_0x1
+; 0000 007B             delay_ms(10);
+	LDI  R26,LOW(10)
+	LDI  R27,0
+	RCALL _delay_ms
+; 0000 007C             PORTD ^= (1<<7);
+	RCALL SUBOPT_0x1
+; 0000 007D             }
+; 0000 007E 
+; 0000 007F     //}
+; 0000 0080 }
+_0x3:
 	RET
 ; .FEND
 ;
 ;void main()
-; 0000 0071 {
+; 0000 0083 {
 _main:
 ; .FSTART _main
-; 0000 0072     short int pwm_dir = 1; // 1 - forward, 0 - back
-; 0000 0073     #asm("cli")
+; 0000 0084     short int pwm_dir = 1; // 1 - forward, 0 - back
+; 0000 0085     #asm("cli")
 ;	pwm_dir -> R16,R17
 	__GETWRN 16,17,1
 	cli
-; 0000 0074     initialization_defolt();
+; 0000 0086     initialization_defolt();
 	RCALL _initialization_defolt
-; 0000 0075     init_pwm();
+; 0000 0087     init_pwm();
 	RCALL _init_pwm
-; 0000 0076     #asm("sei")
+; 0000 0088     #asm("sei")
 	sei
-; 0000 0077     while (1)
-_0x3:
-; 0000 0078     {
-; 0000 0079       if(pwm_dir)
+; 0000 0089     while (1)
+_0x4:
+; 0000 008A     {
+; 0000 008B       if(pwm_dir)
 	MOV  R0,R16
 	OR   R0,R17
-	BREQ _0x6
-; 0000 007A       {
-; 0000 007B         OCR2++;
+	BREQ _0x7
+; 0000 008C       {
+; 0000 008D         OCR2++;
 	IN   R30,0x23
 	SUBI R30,-LOW(1)
-	RJMP _0xC
-; 0000 007C       }
-; 0000 007D       else OCR2--;
-_0x6:
+	RJMP _0xD
+; 0000 008E       }
+; 0000 008F       else OCR2--;
+_0x7:
 	IN   R30,0x23
 	SUBI R30,LOW(1)
-_0xC:
+_0xD:
 	OUT  0x23,R30
-; 0000 007E       delay_ms(5);
-	LDI  R26,LOW(5)
-	LDI  R27,0
-	RCALL _delay_ms
-; 0000 007F       if(OCR2 == 0xFF)
+; 0000 0090       delay_us(500);
+	__DELAY_USB 167
+; 0000 0091       if(OCR2 == 0xFF)
 	IN   R30,0x23
 	CPI  R30,LOW(0xFF)
-	BRNE _0x8
-; 0000 0080         pwm_dir = 0;
+	BRNE _0x9
+; 0000 0092         pwm_dir = 0;
 	__GETWRN 16,17,0
-; 0000 0081       else if(OCR2 == 0x00)
-	RJMP _0x9
-_0x8:
+; 0000 0093       else if(OCR2 == 0x00)
+	RJMP _0xA
+_0x9:
 	IN   R30,0x23
 	CPI  R30,0
-	BRNE _0xA
-; 0000 0082         pwm_dir = 1;
+	BRNE _0xB
+; 0000 0094         pwm_dir = 1;
 	__GETWRN 16,17,1
-; 0000 0083     }
-_0xA:
-_0x9:
-	RJMP _0x3
-; 0000 0084 }
+; 0000 0095     }
 _0xB:
-	RJMP _0xB
+_0xA:
+	RJMP _0x4
+; 0000 0096 }
+_0xC:
+	RJMP _0xC
+; .FEND
+;
+;interrupt [EXT_INT1] void ext_int1_isr(void)
+; 0000 0099 {
+_ext_int1_isr:
+; .FSTART _ext_int1_isr
+	ST   -Y,R0
+	ST   -Y,R1
+	ST   -Y,R15
+	ST   -Y,R22
+	ST   -Y,R23
+	ST   -Y,R24
+	ST   -Y,R25
+	ST   -Y,R26
+	ST   -Y,R27
+	ST   -Y,R30
+	ST   -Y,R31
+	IN   R30,SREG
+	ST   -Y,R30
+; 0000 009A     check_PC();
+	RCALL _check_PC
+; 0000 009B }
+	LD   R30,Y+
+	OUT  SREG,R30
+	LD   R31,Y+
+	LD   R30,Y+
+	LD   R27,Y+
+	LD   R26,Y+
+	LD   R25,Y+
+	LD   R24,Y+
+	LD   R23,Y+
+	LD   R22,Y+
+	LD   R15,Y+
+	LD   R1,Y+
+	LD   R0,Y+
+	RETI
 ; .FEND
 
 	.CSEG
@@ -1396,6 +1473,14 @@ SUBOPT_0x0:
 	LDI  R30,LOW(0)
 	OUT  0x24,R30
 	OUT  0x23,R30
+	RET
+
+;OPTIMIZER ADDED SUBROUTINE, CALLED 2 TIMES, CODE SIZE REDUCTION:1 WORDS
+SUBOPT_0x1:
+	IN   R30,0x12
+	LDI  R26,LOW(128)
+	EOR  R30,R26
+	OUT  0x12,R30
 	RET
 
 

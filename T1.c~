@@ -2,7 +2,7 @@
 #include <mega8.h>
 #include <io.h>
 #include <delay.h>
-//#include <interrupt.h>
+
 
 
 void initialization_defolt()
@@ -24,9 +24,9 @@ void initialization_defolt()
 
     // Port D initialization
     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=In Bit2=In Bit1=In Bit0=In
-    DDRD=(0<<DDD7) | (0<<DDD6) | (0<<DDD5) | (0<<DDD4) | (0<<DDD3) | (0<<DDD2) | (0<<DDD1) | (0<<DDD0);
+    DDRD=(1<<DDD7) | (0<<DDD6) | (0<<DDD5) | (0<<DDD4) | (0<<DDD3) | (0<<DDD2) | (0<<DDD1) | (0<<DDD0);
     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
-    PORTD=(0<<PORTD7) | (0<<PORTD6) | (0<<PORTD5) | (0<<PORTD4) | (0<<PORTD3) | (0<<PORTD2) | (0<<PORTD1) | (0<<PORTD0);
+    PORTD=(1<<PORTD7) | (0<<PORTD6) | (0<<PORTD5) | (0<<PORTD4) | (0<<PORTD3) | (0<<PORTD2) | (0<<PORTD1) | (0<<PORTD0);
 
     // Timer/Counter 0 initialization
     // Clock source: System Clock
@@ -73,7 +73,10 @@ void initialization_defolt()
     // External Interrupt(s) initialization
     // INT0: Off
     // INT1: Off
-    MCUCR=(0<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
+    MCUCR=(1<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
+    GICR|=(1<<INT1) | (0<<INT0);
+    MCUCR=(1<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
+    GIFR=(1<<INTF1) | (0<<INTF0);
 
     // USART initialization
     // USART disabled
@@ -109,6 +112,21 @@ void init_pwm()
     OCR2 = 0x00;
 }
 
+void check_PC()
+{
+    //int i;
+    //for(i = 0; i < 8; i++)
+    //{
+        if(~PINC & (1<<1))
+            {
+            PORTD ^= (1<<7);
+            delay_us(5000);
+            PORTD ^= (1<<7);
+            }
+
+    //}
+}
+
 void main()
 {
     short int pwm_dir = 1; // 1 - forward, 0 - back
@@ -123,10 +141,15 @@ void main()
         OCR2++;
       }
       else OCR2--;
-      delay_ms(1);
+      delay_us(500);
       if(OCR2 == 0xFF)
         pwm_dir = 0;
       else if(OCR2 == 0x00)
         pwm_dir = 1;
     }
+}
+
+interrupt [EXT_INT1] void ext_int1_isr(void)
+{
+    check_PC();
 }
