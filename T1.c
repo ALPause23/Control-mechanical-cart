@@ -3,9 +3,14 @@
 #include <io.h>
 #include <delay.h>
 
+#define PC0   1<<0; // вперёд
+#define PC1   1<<1; // назад
+#define PC2   1<<2; // Тампер впереди
+#define PC3   1<<3; // Тампер сзади
 
+int statusMotor;
 
-void initialization_defolt()
+void initializationDefolt()
 {
     // Declare your local variables here
 
@@ -104,52 +109,66 @@ void initialization_defolt()
     TWCR=(0<<TWEA) | (0<<TWSTA) | (0<<TWSTO) | (0<<TWEN) | (0<<TWIE);
 }
 
-void init_pwm()
+void initPWM()
 {
     ASSR = 0x00;
-    TCCR2 = 0b01101010;
+    TCCR2 = 0b01101000;    // таймер отключен
     TCNT2 = 0x00;
     OCR2 = 0x00;
 }
 
-void check_PC()
+int checkPortPC()
 {
-    //int i;
-    //for(i = 0; i < 8; i++)
-    //{
-        if(~PINC & (1<<1))
-            {
-            PORTD ^= (1<<7);
-            delay_ms(10);
-            PORTD ^= (1<<7);
-            }
+    int i, j = 0;
+    for(i = 0; i <= 4; i++)
+    {
+        if(~PINC & (1<<i))
+        {
+            j = i;
+        }
+    }
+    if(i == 1) return j;
+    else return 255;
+}
 
-    //}
+void PWM()
+{
+    /*if(pwm_dir)
+      {
+        OCR2++;
+      }
+    else OCR2--;
+    delay_us(500);
+    if(OCR2 == 0xFF)
+       pwm_dir = 0;
+    else if(OCR2 == 0x00)
+       pwm_dir = 1; */
 }
 
 void main()
 {
     short int pwm_dir = 1; // 1 - forward, 0 - back
     #asm("cli")
-    initialization_defolt();
-    init_pwm();
+    initializationDefolt();
+    initPWM();
     #asm("sei")
     while (1)
     {
-      if(pwm_dir)
-      {
-        OCR2++;
-      }
-      else OCR2--;
-      delay_us(500);
-      if(OCR2 == 0xFF)
-        pwm_dir = 0;
-      else if(OCR2 == 0x00)
-        pwm_dir = 1;
+
     }
 }
 
 interrupt [EXT_INT1] void ext_int1_isr(void)
 {
-    check_PC();
+    switch(checkPortPC())
+    {
+        case 0:
+            goUp();
+            break;
+        case 1:
+    {
+            TCCR2 = 0b01101000;    // таймер отключен
+            delay_ms(1000);
+            init_pwm();
+        }
 }

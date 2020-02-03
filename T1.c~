@@ -120,7 +120,7 @@ void check_PC()
         if(~PINC & (1<<1))
             {
             PORTD ^= (1<<7);
-            delay_us(5000);
+            delay_ms(10);
             PORTD ^= (1<<7);
             }
 
