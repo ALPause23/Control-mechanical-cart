@@ -9,12 +9,14 @@ Variable                                                                        
 Register Allocation
 Variable                                                                          Register  Size
 ------------------------------------------------------------------------------------------------
+statusMotor                                                                       R4,R5        2
+pwm_dir                                                                           R6,R7        2
 
 FLASH Allocation [words]
 Function                                                                          Address   Size
 ------------------------------------------------------------------------------------------------
-initialization_defolt                                                             0x00C2E     45
-init_pwm                                                                          0x00C5B      5
-check_PC                                                                          0x00C60     10
-main                                                                              0x00C6A     31
-ext_int1_isr                                                                      0x00C89     28
+initializationDefolt                                                              0x00C2E     46
+initPWM                                                                           0x00C5C      2
+checkPortPC                                                                       0x00C5E     44
+main                                                                              0x00CB8      9
+ext_int1_isr                                                                      0x00CC1     45
