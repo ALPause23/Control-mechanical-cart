@@ -127,15 +127,15 @@ int checkPortPC()
         if(~PINC & (1<<i))
         {
             j = i;
-            k++;
+            //k++;
         }
     }
-    if(k == 1)
+    //if(k == 1)
     {
         PORTD &= ~(1<<6);
         return j;
     }
-    else return 255;
+    //else return 255;
 }
 
 void PWM(int dir)
@@ -155,7 +155,7 @@ void PWM(int dir)
     {
         OCR2 = 0xFF;
         TCCR2 = 0b01101100; //start timer
-        while(OCR2 != 0xFF)
+        while(OCR2 != 0x00)
         {
             OCR2--;
             delay_ms(3);
@@ -165,7 +165,7 @@ void PWM(int dir)
     TCCR2 = 0x00; //stop timer
     OCR2 = 0x00;
     if(dir) PORTB |= (1<<3);
-    else PORTC &= ~(1<<3);
+    else PORTB &= ~(1<<3);
     return;
 
     /*if(pwm_dir)
@@ -206,7 +206,10 @@ interrupt [EXT_INT1] void ext_int1_isr(void)
         {
             PWM(0);
         }
-        default: {PORTD |= (1<<5);}
+        case 2: {PORTD |= (1<<5);break;}
+        case 3: {break;}
+        case 4: {break;}
+        default: {}
     }
 
     PORTD &= ~(1<<7);
