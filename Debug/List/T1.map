@@ -9,15 +9,16 @@ Variable                                                                        
 Register Allocation
 Variable                                                                          Register  Size
 ------------------------------------------------------------------------------------------------
-statusMotor                                                                       R4,R5        2
-pwm_dir                                                                           R6,R7        2
+PWMDir                                                                            R4,R5        2
+statusMotor                                                                       R6,R7        2
+numButtom                                                                         R8,R9        2
 
 FLASH Allocation [words]
 Function                                                                          Address   Size
 ------------------------------------------------------------------------------------------------
-initializationDefolt                                                              0x00C2E     46
-initPWM                                                                           0x00C5C      2
-checkPortPC                                                                       0x00C5E     42
-goUpDown                                                                          0x00CB1     10
-main                                                                              0x00CBB      9
-ext_int1_isr                                                                      0x00CC4     62
+initializationDefolt                                                              0x00C46     46
+initPWM                                                                           0x00C74      2
+checkPortPC                                                                       0x00C76     42
+goUpDown                                                                          0x00CC9     19
+main                                                                              0x00CDC      6
+exterInt1                                                                         0x00CE2     63

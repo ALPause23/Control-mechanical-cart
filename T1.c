@@ -8,8 +8,9 @@
 #define PC2   (1<<2); // Тампер впереди
 #define PC3   (1<<3); // Тампер сзади
 
-short int statusMotor;
-short int pwm_dir; // 1 - forward, 0 - back
+short int PWMDir = 0;  // 0 - start, 1 - stop
+short int statusMotor = 0;  // 1 - worked, 0 - stopped
+short int numButtom;  // 0 - up, 1 - down
 
 void initializationDefolt()
 {
@@ -138,7 +139,7 @@ int checkPortPC()
 
 void PWM()
 {
-    if(statusMotor == 0)
+    if(PWMDir == 0)
     {
         OCR2 = 0x00;
         TCCR2 = 0b01101100; //start timer
@@ -147,7 +148,7 @@ void PWM()
             OCR2++;
             delay_ms(3);
         }
-        statusMotor = 1;
+        PWMDir = 1;
     }
     else
     {
@@ -158,24 +159,14 @@ void PWM()
             OCR2--;
             delay_ms(3);
         }
-        statusMotor = 0;
+        PWMDir = 0;
     }
     TCCR2 = 0x00; //stop timer
     OCR2 = 0x00;
-    if(statusMotor) PORTB |= (1<<3);
+    if(PWMDir) PORTB |= (1<<3);
     else PORTB &= ~(1<<3);
     return;
 
-    /*if(pwm_dir)
-      {
-        OCR2++;
-      }
-    else OCR2--;
-    delay_us(500);
-    if(OCR2 == 0xFF)
-       pwm_dir = 0;
-    else if(OCR2 == 0x00)
-       pwm_dir = 1;  */
 }
 
 void goUpDown(char dir) //1 - up, 0 - down
@@ -183,11 +174,13 @@ void goUpDown(char dir) //1 - up, 0 - down
    if (dir) PORTB |= (1<<4);
    else PORTB &= ~(1<<4);
    PWM();
+   if(statusMotor == 0)
+   statusMotor = 1;
+   else statusMotor = 0;
 }
 
 void main()
 {
-    pwm_dir = 1; // 1 - forward, 0 - back
     #asm("cli")
     initializationDefolt();
     initPWM();
@@ -198,10 +191,12 @@ void main()
     }
 }
 
-interrupt [EXT_INT1] void ext_int1_isr(void)
+interrupt [EXT_INT1] void exterInt1(void)     // interupt buttom control
 {
-    PORTD = (1<<5);
-    switch(checkPortPC())
+    if(!statusMotor) numButtom = checkPortPC();
+
+
+    switch(numButtom)
     {
         case 0:
             PORTD |= (1<<7);
@@ -209,10 +204,8 @@ interrupt [EXT_INT1] void ext_int1_isr(void)
             PORTD &= ~(1<<7);
             break;
         case 1:
-        {
-            PORTD |= (1<<6);
+        {   PORTD |= (1<<6);
             goUpDown(0);
-            PORTD &= ~(1<<6);
         }
         case 2: {break;}
         case 3: {break;}
@@ -220,5 +213,5 @@ interrupt [EXT_INT1] void ext_int1_isr(void)
         default: {PORTD = (1<<4); break;}
     }
 
-    PORTD &= ~(1<<5);
+
 }
