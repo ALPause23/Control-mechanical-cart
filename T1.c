@@ -18,7 +18,7 @@ void initializationDefolt()
     // Input/Output Ports initialization
     // Port B initialization
     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=OUT Bit2=In Bit1=In Bit0=In
-    DDRB=(0<<DDB7) | (0<<DDB6) | (0<<DDB5) | (0<<DDB4) | (1<<DDB3) | (0<<DDB2) | (0<<DDB1) | (0<<DDB0);
+    DDRB=(0<<DDB7) | (0<<DDB6) | (0<<DDB5) | (1<<DDB4) | (1<<DDB3) | (0<<DDB2) | (0<<DDB1) | (0<<DDB0);
     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
     PORTB=(0<<PORTB7) | (0<<PORTB6) | (0<<PORTB5) | (0<<PORTB4) | (0<<PORTB3) | (0<<PORTB2) | (0<<PORTB1) | (0<<PORTB0);
 
@@ -79,9 +79,9 @@ void initializationDefolt()
     // External Interrupt(s) initialization
     // INT0: Off
     // INT1: Off
-    MCUCR=(1<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
+    MCUCR=(0<<ISC11) | (1<<ISC10) | (0<<ISC01) | (0<<ISC00);
     GICR|=(1<<INT1) | (0<<INT0);
-    MCUCR=(1<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
+    MCUCR=(0<<ISC11) | (1<<ISC10) | (0<<ISC01) | (0<<ISC00);
     GIFR=(1<<INTF1) | (0<<INTF0);
 
     // USART initialization
@@ -121,7 +121,7 @@ void initPWM()
 int checkPortPC()
 {
     int i, j = 0, k = 0;
-    PORTD |= (1<<6);
+    //PORTD |= (1<<6);
     for(i = 0; i <= 4; i++)
     {
         if(~PINC & (1<<i))
@@ -132,15 +132,14 @@ int checkPortPC()
     }
     //if(k == 1)
     {
-        PORTD &= ~(1<<6);
         return j;
     }
     //else return 255;
 }
 
-void PWM(int dir)
+void PWM()
 {
-    if(dir)
+    if(statusMotor == 0)
     {
         OCR2 = 0x00;
         TCCR2 = 0b01101100; //start timer
@@ -164,7 +163,7 @@ void PWM(int dir)
     }
     TCCR2 = 0x00; //stop timer
     OCR2 = 0x00;
-    if(dir) PORTB |= (1<<3);
+    if(statusMotor) PORTB |= (1<<3);
     else PORTB &= ~(1<<3);
     return;
 
@@ -178,6 +177,13 @@ void PWM(int dir)
        pwm_dir = 0;
     else if(OCR2 == 0x00)
        pwm_dir = 1;  */
+}
+
+void goUpDown(char dir) //1 - up, 0 - down
+{
+   if (dir) PORTB |= (1<<4);
+   else PORTB &= ~(1<<4);
+   PWM();
 }
 
 void main()
@@ -195,22 +201,25 @@ void main()
 
 interrupt [EXT_INT1] void ext_int1_isr(void)
 {
+    PORTD = (1<<5);
     switch(checkPortPC())
-    {   PORTD |= (1<<7);
+    {
         case 0:
-            //goUp();
-            PWM(1);
+            PORTD |= (1<<7);
+            goUpDown(1);
             PORTD &= ~(1<<7);
             break;
         case 1:
         {
-            PWM(0);
+            PORTD |= (1<<6);
+            goUpDown(0);
+            PORTD &= ~(1<<6);
         }
-        case 2: {PORTD |= (1<<5);break;}
+        case 2: {break;}
         case 3: {break;}
         case 4: {break;}
         default: {}
     }
 
-    PORTD &= ~(1<<7);
+    PORTD &= ~(1<<5);
 }

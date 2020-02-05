@@ -17,5 +17,6 @@ Function                                                                        
 ------------------------------------------------------------------------------------------------
 initializationDefolt                                                              0x00C2E     46
 initPWM                                                                           0x00C5C      2
-main                                                                              0x00CAE      9
-ext_int1_isr                                                                      0x00CB7     50
+goUpDown                                                                          0x00CA7     10
+main                                                                              0x00CB1      9
+ext_int1_isr                                                                      0x00CBA     47

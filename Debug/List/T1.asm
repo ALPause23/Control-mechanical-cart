@@ -1200,8 +1200,8 @@ _initializationDefolt:
 ; 0000 0012     // Input/Output Ports initialization
 ; 0000 0013     // Port B initialization
 ; 0000 0014     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=OUT Bit2=In Bit1=In Bit0=In
-; 0000 0015     DDRB=(0<<DDB7) | (0<<DDB6) | (0<<DDB5) | (0<<DDB4) | (1<<DDB3) | (0<<DDB2) | (0<<DDB1) | (0<<DDB0);
-	LDI  R30,LOW(8)
+; 0000 0015     DDRB=(0<<DDB7) | (0<<DDB6) | (0<<DDB5) | (1<<DDB4) | (1<<DDB3) | (0<<DDB2) | (0<<DDB1) | (0<<DDB0);
+	LDI  R30,LOW(24)
 	OUT  0x17,R30
 ; 0000 0016     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
 ; 0000 0017     PORTB=(0<<PORTB7) | (0<<PORTB6) | (0<<PORTB5) | (0<<PORTB4) | (0<<PORTB3) | (0<<PORTB2) | (0<<PORTB1) | (0<<PORTB0);
@@ -1288,15 +1288,15 @@ _initializationDefolt:
 ; 0000 004F     // External Interrupt(s) initialization
 ; 0000 0050     // INT0: Off
 ; 0000 0051     // INT1: Off
-; 0000 0052     MCUCR=(1<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
-	LDI  R30,LOW(8)
+; 0000 0052     MCUCR=(0<<ISC11) | (1<<ISC10) | (0<<ISC01) | (0<<ISC00);
+	LDI  R30,LOW(4)
 	OUT  0x35,R30
 ; 0000 0053     GICR|=(1<<INT1) | (0<<INT0);
 	IN   R30,0x3B
 	ORI  R30,0x80
 	OUT  0x3B,R30
-; 0000 0054     MCUCR=(1<<ISC11) | (0<<ISC10) | (0<<ISC01) | (0<<ISC00);
-	LDI  R30,LOW(8)
+; 0000 0054     MCUCR=(0<<ISC11) | (1<<ISC10) | (0<<ISC01) | (0<<ISC00);
+	LDI  R30,LOW(4)
 	OUT  0x35,R30
 ; 0000 0055     GIFR=(1<<INTF1) | (0<<INTF0);
 	LDI  R30,LOW(128)
@@ -1357,15 +1357,14 @@ _initPWM:
 _checkPortPC:
 ; .FSTART _checkPortPC
 ; 0000 007B     int i, j = 0, k = 0;
-; 0000 007C     PORTD |= (1<<6);
+; 0000 007C     //PORTD |= (1<<6);
+; 0000 007D     for(i = 0; i <= 4; i++)
 	RCALL __SAVELOCR6
 ;	i -> R16,R17
 ;	j -> R18,R19
 ;	k -> R20,R21
 	__GETWRN 18,19,0
 	__GETWRN 20,21,0
-	SBI  0x12,6
-; 0000 007D     for(i = 0; i <= 4; i++)
 	__GETWRN 16,17,0
 _0x4:
 	__CPWRN 16,17,5
@@ -1397,147 +1396,162 @@ _0x6:
 _0x5:
 ; 0000 0085     //if(k == 1)
 ; 0000 0086     {
-; 0000 0087         PORTD &= ~(1<<6);
-	CBI  0x12,6
-; 0000 0088         return j;
+; 0000 0087         return j;
 	MOVW R30,R18
 	RCALL __LOADLOCR6
 	ADIW R28,6
 	RET
-; 0000 0089     }
-; 0000 008A     //else return 255;
-; 0000 008B }
+; 0000 0088     }
+; 0000 0089     //else return 255;
+; 0000 008A }
 ; .FEND
 ;
-;void PWM(int dir)
-; 0000 008E {
+;void PWM()
+; 0000 008D {
 _PWM:
 ; .FSTART _PWM
-; 0000 008F     if(dir)
-	ST   -Y,R27
-	ST   -Y,R26
-;	dir -> Y+0
-	LD   R30,Y
-	LDD  R31,Y+1
-	SBIW R30,0
-	BREQ _0x7
-; 0000 0090     {
-; 0000 0091         OCR2 = 0x00;
+; 0000 008E     if(statusMotor == 0)
+	MOV  R0,R4
+	OR   R0,R5
+	BRNE _0x7
+; 0000 008F     {
+; 0000 0090         OCR2 = 0x00;
 	LDI  R30,LOW(0)
 	OUT  0x23,R30
-; 0000 0092         TCCR2 = 0b01101100; //start timer
+; 0000 0091         TCCR2 = 0b01101100; //start timer
 	LDI  R30,LOW(108)
 	OUT  0x25,R30
-; 0000 0093         while(OCR2 != 0xFF)
+; 0000 0092         while(OCR2 != 0xFF)
 _0x8:
 	IN   R30,0x23
 	CPI  R30,LOW(0xFF)
 	BREQ _0xA
-; 0000 0094         {
-; 0000 0095             OCR2++;
+; 0000 0093         {
+; 0000 0094             OCR2++;
 	IN   R30,0x23
 	SUBI R30,-LOW(1)
 	RCALL SUBOPT_0x1
-; 0000 0096             delay_ms(3);
-; 0000 0097         }
+; 0000 0095             delay_ms(3);
+; 0000 0096         }
 	RJMP _0x8
 _0xA:
-; 0000 0098         statusMotor = 1;
+; 0000 0097         statusMotor = 1;
 	LDI  R30,LOW(1)
 	LDI  R31,HIGH(1)
 	MOVW R4,R30
-; 0000 0099     }
-; 0000 009A     else
+; 0000 0098     }
+; 0000 0099     else
 	RJMP _0xB
 _0x7:
-; 0000 009B     {
-; 0000 009C         OCR2 = 0xFF;
+; 0000 009A     {
+; 0000 009B         OCR2 = 0xFF;
 	LDI  R30,LOW(255)
 	OUT  0x23,R30
-; 0000 009D         TCCR2 = 0b01101100; //start timer
+; 0000 009C         TCCR2 = 0b01101100; //start timer
 	LDI  R30,LOW(108)
 	OUT  0x25,R30
-; 0000 009E         while(OCR2 != 0x00)
+; 0000 009D         while(OCR2 != 0x00)
 _0xC:
 	IN   R30,0x23
 	CPI  R30,0
 	BREQ _0xE
-; 0000 009F         {
-; 0000 00A0             OCR2--;
+; 0000 009E         {
+; 0000 009F             OCR2--;
 	IN   R30,0x23
 	SUBI R30,LOW(1)
 	RCALL SUBOPT_0x1
-; 0000 00A1             delay_ms(3);
-; 0000 00A2         }
+; 0000 00A0             delay_ms(3);
+; 0000 00A1         }
 	RJMP _0xC
 _0xE:
-; 0000 00A3         statusMotor = 0;
+; 0000 00A2         statusMotor = 0;
 	CLR  R4
 	CLR  R5
-; 0000 00A4     }
+; 0000 00A3     }
 _0xB:
-; 0000 00A5     TCCR2 = 0x00; //stop timer
+; 0000 00A4     TCCR2 = 0x00; //stop timer
 	LDI  R30,LOW(0)
 	OUT  0x25,R30
-; 0000 00A6     OCR2 = 0x00;
+; 0000 00A5     OCR2 = 0x00;
 	OUT  0x23,R30
-; 0000 00A7     if(dir) PORTB |= (1<<3);
-	LD   R30,Y
-	LDD  R31,Y+1
-	SBIW R30,0
+; 0000 00A6     if(statusMotor) PORTB |= (1<<3);
+	MOV  R0,R4
+	OR   R0,R5
 	BREQ _0xF
 	SBI  0x18,3
-; 0000 00A8     else PORTB &= ~(1<<3);
+; 0000 00A7     else PORTB &= ~(1<<3);
 	RJMP _0x10
 _0xF:
 	CBI  0x18,3
-; 0000 00A9     return;
+; 0000 00A8     return;
 _0x10:
-	ADIW R28,2
 	RET
-; 0000 00AA 
-; 0000 00AB     /*if(pwm_dir)
-; 0000 00AC       {
-; 0000 00AD         OCR2++;
-; 0000 00AE       }
-; 0000 00AF     else OCR2--;
-; 0000 00B0     delay_us(500);
-; 0000 00B1     if(OCR2 == 0xFF)
-; 0000 00B2        pwm_dir = 0;
-; 0000 00B3     else if(OCR2 == 0x00)
-; 0000 00B4        pwm_dir = 1;  */
-; 0000 00B5 }
+; 0000 00A9 
+; 0000 00AA     /*if(pwm_dir)
+; 0000 00AB       {
+; 0000 00AC         OCR2++;
+; 0000 00AD       }
+; 0000 00AE     else OCR2--;
+; 0000 00AF     delay_us(500);
+; 0000 00B0     if(OCR2 == 0xFF)
+; 0000 00B1        pwm_dir = 0;
+; 0000 00B2     else if(OCR2 == 0x00)
+; 0000 00B3        pwm_dir = 1;  */
+; 0000 00B4 }
+; .FEND
+;
+;void goUpDown(char dir) //1 - up, 0 - down
+; 0000 00B7 {
+_goUpDown:
+; .FSTART _goUpDown
+; 0000 00B8    if (dir) PORTB |= (1<<4);
+	ST   -Y,R26
+;	dir -> Y+0
+	LD   R30,Y
+	CPI  R30,0
+	BREQ _0x11
+	SBI  0x18,4
+; 0000 00B9    else PORTB &= ~(1<<4);
+	RJMP _0x12
+_0x11:
+	CBI  0x18,4
+; 0000 00BA    PWM();
+_0x12:
+	RCALL _PWM
+; 0000 00BB }
+	ADIW R28,1
+	RET
 ; .FEND
 ;
 ;void main()
-; 0000 00B8 {
+; 0000 00BE {
 _main:
 ; .FSTART _main
-; 0000 00B9     pwm_dir = 1; // 1 - forward, 0 - back
+; 0000 00BF     pwm_dir = 1; // 1 - forward, 0 - back
 	LDI  R30,LOW(1)
 	LDI  R31,HIGH(1)
 	MOVW R6,R30
-; 0000 00BA     #asm("cli")
+; 0000 00C0     #asm("cli")
 	cli
-; 0000 00BB     initializationDefolt();
+; 0000 00C1     initializationDefolt();
 	RCALL _initializationDefolt
-; 0000 00BC     initPWM();
+; 0000 00C2     initPWM();
 	RCALL _initPWM
-; 0000 00BD     #asm("sei")
+; 0000 00C3     #asm("sei")
 	sei
-; 0000 00BE     while (1)
-_0x11:
-; 0000 00BF     {
-; 0000 00C0 
-; 0000 00C1     }
-	RJMP _0x11
-; 0000 00C2 }
-_0x14:
-	RJMP _0x14
+; 0000 00C4     while (1)
+_0x13:
+; 0000 00C5     {
+; 0000 00C6 
+; 0000 00C7     }
+	RJMP _0x13
+; 0000 00C8 }
+_0x16:
+	RJMP _0x16
 ; .FEND
 ;
 ;interrupt [EXT_INT1] void ext_int1_isr(void)
-; 0000 00C5 {
+; 0000 00CB {
 _ext_int1_isr:
 ; .FSTART _ext_int1_isr
 	ST   -Y,R0
@@ -1553,53 +1567,53 @@ _ext_int1_isr:
 	ST   -Y,R31
 	IN   R30,SREG
 	ST   -Y,R30
-; 0000 00C6     switch(checkPortPC())
+; 0000 00CC     PORTD = (1<<5);
+	LDI  R30,LOW(32)
+	OUT  0x12,R30
+; 0000 00CD     switch(checkPortPC())
 	RCALL _checkPortPC
-; 0000 00C7     {   PORTD |= (1<<7);
-	SBI  0x12,7
-; 0000 00C8         case 0:
+; 0000 00CE     {
+; 0000 00CF         case 0:
 	SBIW R30,0
-	BRNE _0x18
-; 0000 00C9             //goUp();
-; 0000 00CA             PWM(1);
+	BRNE _0x1A
+; 0000 00D0             PORTD |= (1<<7);
+	SBI  0x12,7
+; 0000 00D1             goUpDown(1);
 	LDI  R26,LOW(1)
-	LDI  R27,0
-	RCALL _PWM
-; 0000 00CB             PORTD &= ~(1<<7);
+	RCALL _goUpDown
+; 0000 00D2             PORTD &= ~(1<<7);
 	CBI  0x12,7
-; 0000 00CC             break;
-	RJMP _0x17
-; 0000 00CD         case 1:
-_0x18:
+; 0000 00D3             break;
+	RJMP _0x19
+; 0000 00D4         case 1:
+_0x1A:
 	CPI  R30,LOW(0x1)
 	LDI  R26,HIGH(0x1)
 	CPC  R31,R26
-	BRNE _0x19
-; 0000 00CE         {
-; 0000 00CF             PWM(0);
-	LDI  R26,LOW(0)
-	LDI  R27,0
-	RCALL _PWM
-; 0000 00D0         }
-; 0000 00D1         case 2: {PORTD |= (1<<5);break;}
-	RJMP _0x1A
-_0x19:
-	CPI  R30,LOW(0x2)
-	LDI  R26,HIGH(0x2)
-	CPC  R31,R26
 	BRNE _0x1B
-_0x1A:
-	SBI  0x12,5
-; 0000 00D2         case 3: {break;}
+; 0000 00D5         {
+; 0000 00D6             PORTD |= (1<<6);
+	SBI  0x12,6
+; 0000 00D7             goUpDown(0);
+	LDI  R26,LOW(0)
+	RCALL _goUpDown
+; 0000 00D8             PORTD &= ~(1<<6);
+	CBI  0x12,6
+; 0000 00D9         }
+; 0000 00DA         case 2: {break;}
+	RJMP _0x1C
 _0x1B:
-; 0000 00D3         case 4: {break;}
-; 0000 00D4         default: {}
-; 0000 00D5     }
-_0x17:
-; 0000 00D6 
-; 0000 00D7     PORTD &= ~(1<<7);
-	CBI  0x12,7
-; 0000 00D8 }
+_0x1C:
+; 0000 00DB         case 3: {break;}
+_0x1D:
+; 0000 00DC         case 4: {break;}
+; 0000 00DD         default: {}
+; 0000 00DE     }
+_0x19:
+; 0000 00DF 
+; 0000 00E0     PORTD &= ~(1<<5);
+	CBI  0x12,5
+; 0000 00E1 }
 	LD   R30,Y+
 	OUT  SREG,R30
 	LD   R31,Y+
