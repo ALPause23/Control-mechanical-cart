@@ -232,8 +232,7 @@
 ;PCODE: $00000060 VOL: 0
 ;PCODE: $00000061 VOL: 0
 ; 0000 007B     int i, j = 0, k = 0;
-; 0000 007C     //PORTD |= (1<<6);
-; 0000 007D     for(i = 0; i <= 4; i++)
+; 0000 007C     for(i = 0; i <= 4; i++)
 ;PCODE: $00000062 VOL: 0
 ;	i -> R16,R17
 ;	j -> R18,R19
@@ -251,8 +250,8 @@
 ;PCODE: $0000006D VOL: 0
 ;PCODE: $0000006E VOL: 0
 ;PCODE: $0000006F VOL: 0
-; 0000 007E     {
-; 0000 007F         if(~PINC & (1<<i))
+; 0000 007D     {
+; 0000 007E         if(~PINC & (1<<i))
 ;PCODE: $00000070 VOL: 0
 ;PCODE: $00000071 VOL: 0
 ;PCODE: $00000072 VOL: 0
@@ -264,250 +263,267 @@
 ;PCODE: $00000078 VOL: 0
 ;PCODE: $00000079 VOL: 0
 ;PCODE: $0000007A VOL: 0
-; 0000 0080         {
-; 0000 0081             j = i;
+; 0000 007F         {
+; 0000 0080             j = i;
 ;PCODE: $0000007B VOL: 0
 ;PCODE: $0000007C VOL: 0
-; 0000 0082             //k++;
-; 0000 0083         }
-; 0000 0084     }
+; 0000 0081             k++;
 ;PCODE: $0000007D VOL: 0
 ;PCODE: $0000007E VOL: 0
+; 0000 0082         }
+; 0000 0083     }
 ;PCODE: $0000007F VOL: 0
 ;PCODE: $00000080 VOL: 0
 ;PCODE: $00000081 VOL: 0
 ;PCODE: $00000082 VOL: 0
-; 0000 0085     //if(k == 1)
-; 0000 0086     {
-; 0000 0087         return j;
 ;PCODE: $00000083 VOL: 0
 ;PCODE: $00000084 VOL: 0
+; 0000 0084     if(k == 1)
 ;PCODE: $00000085 VOL: 0
 ;PCODE: $00000086 VOL: 0
-; 0000 0088     }
-; 0000 0089     //else return 255;
-; 0000 008A }
 ;PCODE: $00000087 VOL: 0
-;
-;void PWM()
-; 0000 008D {
+; 0000 0085     {
+; 0000 0086         return j;
 ;PCODE: $00000088 VOL: 0
 ;PCODE: $00000089 VOL: 0
-; 0000 008E     if(statusMotor == 0)
 ;PCODE: $0000008A VOL: 0
 ;PCODE: $0000008B VOL: 0
-; 0000 008F     {
-; 0000 0090         OCR2 = 0x00;
+; 0000 0087     }
+; 0000 0088     else return 255;
 ;PCODE: $0000008C VOL: 0
 ;PCODE: $0000008D VOL: 0
-; 0000 0091         TCCR2 = 0b01101100; //start timer
 ;PCODE: $0000008E VOL: 0
 ;PCODE: $0000008F VOL: 0
-; 0000 0092         while(OCR2 != 0xFF)
 ;PCODE: $00000090 VOL: 0
+; 0000 0089 }
 ;PCODE: $00000091 VOL: 0
 ;PCODE: $00000092 VOL: 0
 ;PCODE: $00000093 VOL: 0
-; 0000 0093         {
-; 0000 0094             OCR2++;
 ;PCODE: $00000094 VOL: 0
 ;PCODE: $00000095 VOL: 0
+;
+;void PWM()
+; 0000 008C {
 ;PCODE: $00000096 VOL: 0
-; 0000 0095             delay_ms(3);
 ;PCODE: $00000097 VOL: 0
+; 0000 008D     if(statusMotor == 0)
 ;PCODE: $00000098 VOL: 0
 ;PCODE: $00000099 VOL: 0
-; 0000 0096         }
+; 0000 008E     {
+; 0000 008F         OCR2 = 0x00;
 ;PCODE: $0000009A VOL: 0
 ;PCODE: $0000009B VOL: 0
-; 0000 0097         statusMotor = 1;
+; 0000 0090         TCCR2 = 0b01101100; //start timer
 ;PCODE: $0000009C VOL: 0
 ;PCODE: $0000009D VOL: 0
-; 0000 0098     }
-; 0000 0099     else
+; 0000 0091         while(OCR2 != 0xFF)
 ;PCODE: $0000009E VOL: 0
 ;PCODE: $0000009F VOL: 0
-; 0000 009A     {
-; 0000 009B         OCR2 = 0xFF;
 ;PCODE: $000000A0 VOL: 0
 ;PCODE: $000000A1 VOL: 0
-; 0000 009C         TCCR2 = 0b01101100; //start timer
+; 0000 0092         {
+; 0000 0093             OCR2++;
 ;PCODE: $000000A2 VOL: 0
 ;PCODE: $000000A3 VOL: 0
-; 0000 009D         while(OCR2 != 0x00)
 ;PCODE: $000000A4 VOL: 0
+; 0000 0094             delay_ms(3);
 ;PCODE: $000000A5 VOL: 0
 ;PCODE: $000000A6 VOL: 0
 ;PCODE: $000000A7 VOL: 0
-; 0000 009E         {
-; 0000 009F             OCR2--;
+; 0000 0095         }
 ;PCODE: $000000A8 VOL: 0
 ;PCODE: $000000A9 VOL: 0
+; 0000 0096         statusMotor = 1;
 ;PCODE: $000000AA VOL: 0
-; 0000 00A0             delay_ms(3);
 ;PCODE: $000000AB VOL: 0
+; 0000 0097     }
+; 0000 0098     else
 ;PCODE: $000000AC VOL: 0
 ;PCODE: $000000AD VOL: 0
-; 0000 00A1         }
+; 0000 0099     {
+; 0000 009A         OCR2 = 0xFF;
 ;PCODE: $000000AE VOL: 0
 ;PCODE: $000000AF VOL: 0
-; 0000 00A2         statusMotor = 0;
+; 0000 009B         TCCR2 = 0b01101100; //start timer
 ;PCODE: $000000B0 VOL: 0
-; 0000 00A3     }
 ;PCODE: $000000B1 VOL: 0
-; 0000 00A4     TCCR2 = 0x00; //stop timer
+; 0000 009C         while(OCR2 != 0x00)
 ;PCODE: $000000B2 VOL: 0
 ;PCODE: $000000B3 VOL: 0
-; 0000 00A5     OCR2 = 0x00;
 ;PCODE: $000000B4 VOL: 0
 ;PCODE: $000000B5 VOL: 0
-; 0000 00A6     if(statusMotor) PORTB |= (1<<3);
+; 0000 009D         {
+; 0000 009E             OCR2--;
 ;PCODE: $000000B6 VOL: 0
 ;PCODE: $000000B7 VOL: 0
 ;PCODE: $000000B8 VOL: 0
+; 0000 009F             delay_ms(3);
 ;PCODE: $000000B9 VOL: 0
-; 0000 00A7     else PORTB &= ~(1<<3);
 ;PCODE: $000000BA VOL: 0
 ;PCODE: $000000BB VOL: 0
+; 0000 00A0         }
 ;PCODE: $000000BC VOL: 0
 ;PCODE: $000000BD VOL: 0
-; 0000 00A8     return;
+; 0000 00A1         statusMotor = 0;
 ;PCODE: $000000BE VOL: 0
+; 0000 00A2     }
 ;PCODE: $000000BF VOL: 0
-; 0000 00A9 
-; 0000 00AA     /*if(pwm_dir)
-; 0000 00AB       {
-; 0000 00AC         OCR2++;
-; 0000 00AD       }
-; 0000 00AE     else OCR2--;
-; 0000 00AF     delay_us(500);
-; 0000 00B0     if(OCR2 == 0xFF)
-; 0000 00B1        pwm_dir = 0;
-; 0000 00B2     else if(OCR2 == 0x00)
-; 0000 00B3        pwm_dir = 1;  */
-; 0000 00B4 }
+; 0000 00A3     TCCR2 = 0x00; //stop timer
 ;PCODE: $000000C0 VOL: 0
-;
-;void goUpDown(char dir) //1 - up, 0 - down
-; 0000 00B7 {
 ;PCODE: $000000C1 VOL: 0
+; 0000 00A4     OCR2 = 0x00;
 ;PCODE: $000000C2 VOL: 0
-; 0000 00B8    if (dir) PORTB |= (1<<4);
 ;PCODE: $000000C3 VOL: 0
-;	dir -> Y+0
+; 0000 00A5     if(statusMotor) PORTB |= (1<<3);
 ;PCODE: $000000C4 VOL: 0
 ;PCODE: $000000C5 VOL: 0
 ;PCODE: $000000C6 VOL: 0
 ;PCODE: $000000C7 VOL: 0
+; 0000 00A6     else PORTB &= ~(1<<3);
 ;PCODE: $000000C8 VOL: 0
-; 0000 00B9    else PORTB &= ~(1<<4);
 ;PCODE: $000000C9 VOL: 0
 ;PCODE: $000000CA VOL: 0
 ;PCODE: $000000CB VOL: 0
+; 0000 00A7     return;
 ;PCODE: $000000CC VOL: 0
-; 0000 00BA    PWM();
 ;PCODE: $000000CD VOL: 0
+; 0000 00A8 
+; 0000 00A9     /*if(pwm_dir)
+; 0000 00AA       {
+; 0000 00AB         OCR2++;
+; 0000 00AC       }
+; 0000 00AD     else OCR2--;
+; 0000 00AE     delay_us(500);
+; 0000 00AF     if(OCR2 == 0xFF)
+; 0000 00B0        pwm_dir = 0;
+; 0000 00B1     else if(OCR2 == 0x00)
+; 0000 00B2        pwm_dir = 1;  */
+; 0000 00B3 }
 ;PCODE: $000000CE VOL: 0
-; 0000 00BB }
+;
+;void goUpDown(char dir) //1 - up, 0 - down
+; 0000 00B6 {
 ;PCODE: $000000CF VOL: 0
 ;PCODE: $000000D0 VOL: 0
+; 0000 00B7    if (dir) PORTB |= (1<<4);
 ;PCODE: $000000D1 VOL: 0
-;
-;void main()
-; 0000 00BE {
+;	dir -> Y+0
 ;PCODE: $000000D2 VOL: 0
-; 0000 00BF     pwm_dir = 1; // 1 - forward, 0 - back
 ;PCODE: $000000D3 VOL: 0
 ;PCODE: $000000D4 VOL: 0
-; 0000 00C0     #asm("cli")
 ;PCODE: $000000D5 VOL: 0
-	cli
 ;PCODE: $000000D6 VOL: 0
-; 0000 00C1     initializationDefolt();
+; 0000 00B8    else PORTB &= ~(1<<4);
 ;PCODE: $000000D7 VOL: 0
-; 0000 00C2     initPWM();
 ;PCODE: $000000D8 VOL: 0
-; 0000 00C3     #asm("sei")
 ;PCODE: $000000D9 VOL: 0
-	sei
 ;PCODE: $000000DA VOL: 0
-; 0000 00C4     while (1)
+; 0000 00B9    PWM();
 ;PCODE: $000000DB VOL: 0
-; 0000 00C5     {
-; 0000 00C6 
-; 0000 00C7     }
 ;PCODE: $000000DC VOL: 0
+; 0000 00BA }
 ;PCODE: $000000DD VOL: 0
-; 0000 00C8 }
 ;PCODE: $000000DE VOL: 0
 ;PCODE: $000000DF VOL: 0
-;PCODE: $000000E0 VOL: 0
 ;
-;interrupt [EXT_INT1] void ext_int1_isr(void)
-; 0000 00CB {
+;void main()
+; 0000 00BD {
+;PCODE: $000000E0 VOL: 0
+; 0000 00BE     pwm_dir = 1; // 1 - forward, 0 - back
 ;PCODE: $000000E1 VOL: 0
 ;PCODE: $000000E2 VOL: 0
-; 0000 00CC     PORTD = (1<<5);
+; 0000 00BF     #asm("cli")
 ;PCODE: $000000E3 VOL: 0
+	cli
 ;PCODE: $000000E4 VOL: 0
-; 0000 00CD     switch(checkPortPC())
+; 0000 00C0     initializationDefolt();
 ;PCODE: $000000E5 VOL: 0
-; 0000 00CE     {
-; 0000 00CF         case 0:
+; 0000 00C1     initPWM();
 ;PCODE: $000000E6 VOL: 0
+; 0000 00C2     #asm("sei")
 ;PCODE: $000000E7 VOL: 0
-; 0000 00D0             PORTD |= (1<<7);
+	sei
 ;PCODE: $000000E8 VOL: 0
+; 0000 00C3     while (1)
 ;PCODE: $000000E9 VOL: 0
-; 0000 00D1             goUpDown(1);
+; 0000 00C4     {
+; 0000 00C5 
+; 0000 00C6     }
 ;PCODE: $000000EA VOL: 0
 ;PCODE: $000000EB VOL: 0
-; 0000 00D2             PORTD &= ~(1<<7);
+; 0000 00C7 }
 ;PCODE: $000000EC VOL: 0
 ;PCODE: $000000ED VOL: 0
-; 0000 00D3             break;
 ;PCODE: $000000EE VOL: 0
-; 0000 00D4         case 1:
+;
+;interrupt [EXT_INT1] void ext_int1_isr(void)
+; 0000 00CA {
 ;PCODE: $000000EF VOL: 0
 ;PCODE: $000000F0 VOL: 0
+; 0000 00CB     PORTD = (1<<5);
 ;PCODE: $000000F1 VOL: 0
-; 0000 00D5         {
-; 0000 00D6             PORTD |= (1<<6);
 ;PCODE: $000000F2 VOL: 0
+; 0000 00CC     switch(checkPortPC())
 ;PCODE: $000000F3 VOL: 0
-; 0000 00D7             goUpDown(0);
+; 0000 00CD     {
+; 0000 00CE         case 0:
 ;PCODE: $000000F4 VOL: 0
 ;PCODE: $000000F5 VOL: 0
-; 0000 00D8             PORTD &= ~(1<<6);
+; 0000 00CF             PORTD |= (1<<7);
 ;PCODE: $000000F6 VOL: 0
 ;PCODE: $000000F7 VOL: 0
-; 0000 00D9         }
-; 0000 00DA         case 2: {break;}
+; 0000 00D0             goUpDown(1);
 ;PCODE: $000000F8 VOL: 0
 ;PCODE: $000000F9 VOL: 0
+; 0000 00D1             PORTD &= ~(1<<7);
 ;PCODE: $000000FA VOL: 0
 ;PCODE: $000000FB VOL: 0
+; 0000 00D2             break;
 ;PCODE: $000000FC VOL: 0
+; 0000 00D3         case 1:
 ;PCODE: $000000FD VOL: 0
-; 0000 00DB         case 3: {break;}
 ;PCODE: $000000FE VOL: 0
 ;PCODE: $000000FF VOL: 0
+; 0000 00D4         {
+; 0000 00D5             PORTD |= (1<<6);
 ;PCODE: $00000100 VOL: 0
 ;PCODE: $00000101 VOL: 0
-; 0000 00DC         case 4: {break;}
+; 0000 00D6             goUpDown(0);
 ;PCODE: $00000102 VOL: 0
 ;PCODE: $00000103 VOL: 0
+; 0000 00D7             PORTD &= ~(1<<6);
 ;PCODE: $00000104 VOL: 0
 ;PCODE: $00000105 VOL: 0
-; 0000 00DD         default: {}
+; 0000 00D8         }
+; 0000 00D9         case 2: {break;}
 ;PCODE: $00000106 VOL: 0
-; 0000 00DE     }
 ;PCODE: $00000107 VOL: 0
-; 0000 00DF 
-; 0000 00E0     PORTD &= ~(1<<5);
 ;PCODE: $00000108 VOL: 0
 ;PCODE: $00000109 VOL: 0
-; 0000 00E1 }
 ;PCODE: $0000010A VOL: 0
 ;PCODE: $0000010B VOL: 0
+; 0000 00DA         case 3: {break;}
 ;PCODE: $0000010C VOL: 0
+;PCODE: $0000010D VOL: 0
+;PCODE: $0000010E VOL: 0
+;PCODE: $0000010F VOL: 0
+; 0000 00DB         case 4: {break;}
+;PCODE: $00000110 VOL: 0
+;PCODE: $00000111 VOL: 0
+;PCODE: $00000112 VOL: 0
+;PCODE: $00000113 VOL: 0
+; 0000 00DC         default: {PORTD = (1<<4); break;}
+;PCODE: $00000114 VOL: 0
+;PCODE: $00000115 VOL: 0
+;PCODE: $00000116 VOL: 0
+;PCODE: $00000117 VOL: 0
+; 0000 00DD     }
+;PCODE: $00000118 VOL: 0
+; 0000 00DE 
+; 0000 00DF     PORTD &= ~(1<<5);
+;PCODE: $00000119 VOL: 0
+;PCODE: $0000011A VOL: 0
+; 0000 00E0 }
+;PCODE: $0000011B VOL: 0
+;PCODE: $0000011C VOL: 0
+;PCODE: $0000011D VOL: 0

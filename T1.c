@@ -121,20 +121,19 @@ void initPWM()
 int checkPortPC()
 {
     int i, j = 0, k = 0;
-    //PORTD |= (1<<6);
     for(i = 0; i <= 4; i++)
     {
         if(~PINC & (1<<i))
         {
             j = i;
-            //k++;
+            k++;
         }
     }
-    //if(k == 1)
+    if(k == 1)
     {
         return j;
     }
-    //else return 255;
+    else return 255;
 }
 
 void PWM()
@@ -218,7 +217,7 @@ interrupt [EXT_INT1] void ext_int1_isr(void)
         case 2: {break;}
         case 3: {break;}
         case 4: {break;}
-        default: {}
+        default: {PORTD = (1<<4); break;}
     }
 
     PORTD &= ~(1<<5);
