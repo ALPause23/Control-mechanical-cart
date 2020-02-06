@@ -9,16 +9,19 @@ Variable                                                                        
 Register Allocation
 Variable                                                                          Register  Size
 ------------------------------------------------------------------------------------------------
-PWMDir                                                                            R4,R5        2
-statusMotor                                                                       R6,R7        2
-numButtom                                                                         R8,R9        2
+PWMDir                                                                            R5           1
+statusMotor                                                                       R4           1
+numButtom                                                                         R7           1
+tampStop                                                                          R6           1
 
 FLASH Allocation [words]
 Function                                                                          Address   Size
 ------------------------------------------------------------------------------------------------
-initializationDefolt                                                              0x00C46     46
-initPWM                                                                           0x00C74      2
-checkPortPC                                                                       0x00C76     42
-goUpDown                                                                          0x00CC9     19
-main                                                                              0x00CDC      6
-exterInt1                                                                         0x00CE2     63
+initializationDefolt                                                              0x00C46     45
+initPWM                                                                           0x00C73      2
+checkPortPC                                                                       0x00C75     51
+PWM                                                                               0x00CA8     37
+goUpDown                                                                          0x00CCD     16
+main                                                                              0x00CDD      6
+exterInt0                                                                         0x00CE3     31
+exterInt1                                                                         0x00D02     45

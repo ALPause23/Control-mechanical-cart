@@ -2,15 +2,25 @@
 #include <mega8.h>
 #include <io.h>
 #include <delay.h>
+#include <stdbool.h>
 
 #define PC0   (1<<0); // вперёд
 #define PC1   (1<<1); // назад
-#define PC2   (1<<2); // Тампер впереди
-#define PC3   (1<<3); // Тампер сзади
+#define PC2   (1<<2); // тампер впереди
+#define PC3   (1<<3); // тампер сзади
 
-short int PWMDir = 0;  // 0 - start, 1 - stop
-short int statusMotor = 0;  // 1 - worked, 0 - stopped
-short int numButtom;  // 0 - up, 1 - down
+#define PB3   (1<<3);
+#define PB4   (1<<4);
+
+#define PD4   (1<<4);
+#define PD5   (1<<5);
+#define PD6   (1<<6);
+#define PD7   (1<<7);
+
+bool PWMDir = 0;  // 0 - start, 1 - stop
+bool statusMotor = 0;  // 1 - worked, 0 - stopped
+bool numButtom;  // 0 - up, 1 - down
+bool tampStop = false;
 
 void initializationDefolt()
 {
@@ -81,9 +91,9 @@ void initializationDefolt()
     // INT0: Off
     // INT1: Off
     MCUCR=(0<<ISC11) | (1<<ISC10) | (0<<ISC01) | (0<<ISC00);
-    GICR|=(1<<INT1) | (0<<INT0);
-    MCUCR=(0<<ISC11) | (1<<ISC10) | (0<<ISC01) | (0<<ISC00);
-    GIFR=(1<<INTF1) | (0<<INTF0);
+    GICR|=(1<<INT1) | (1<<INT0);
+    MCUCR=(0<<ISC11) | (1<<ISC10) | (1<<ISC01) | (0<<ISC00);
+    GIFR=(0<<INTF1) | (0<<INTF0);
 
     // USART initialization
     // USART disabled
@@ -114,15 +124,15 @@ void initializationDefolt()
 void initPWM()
 {
     ASSR = 0x00;
-    TCCR2 = 0x00;    // таймер отключен
+    TCCR2 = 0x00;    // таймер отключён
     TCNT2 = 0x00;
     OCR2 = 0x00;
 }
 
-int checkPortPC()
+int checkPortPC(int i, int n)
 {
-    int i, j = 0, k = 0;
-    for(i = 0; i <= 4; i++)
+    int j = 0, k = 0;
+    for(i; i <= n; i++)
     {
         if(~PINC & (1<<i))
         {
@@ -166,13 +176,12 @@ void PWM()
     if(PWMDir) PORTB |= (1<<3);
     else PORTB &= ~(1<<3);
     return;
-
 }
 
 void goUpDown(char dir) //1 - up, 0 - down
 {
-   if (dir) PORTB |= (1<<4);
-   else PORTB &= ~(1<<4);
+   if (dir) PORTB |= PB3;
+   else PORTB &= ~PB3;
    PWM();
    if(statusMotor == 0)
    statusMotor = 1;
@@ -191,27 +200,48 @@ void main()
     }
 }
 
+interrupt [EXT_INT0] void exterInt0(void)
+{   PORTD |= PD7;
+    if (statusMotor)
+    {
+       switch(checkPortPC(2, 3))
+       {
+           case 2:PORTD |= (1<<5);
+               statusMotor = 0;
+               PWMDir = false;
+               tampStop = true;
+               PORTB &= ~(1<<3);
+               break;
+           case 3:
+               break;
+           default:{PORTD |= (1<<6); break;}
+       }
+    }
+    else return;
+    PORTD &= ~PD7;
+}
+
 interrupt [EXT_INT1] void exterInt1(void)     // interupt buttom control
 {
-    if(!statusMotor) numButtom = checkPortPC();
-
-
-    switch(numButtom)
+    if(tampStop)
     {
-        case 0:
-            PORTD |= (1<<7);
-            goUpDown(1);
-            PORTD &= ~(1<<7);
-            break;
-        case 1:
-        {   PORTD |= (1<<6);
-            goUpDown(0);
-        }
-        case 2: {break;}
-        case 3: {break;}
-        case 4: {break;}
-        default: {PORTD = (1<<4); break;}
+        tampStop = false;
+        return;
     }
+    else
+    {
+        if(!statusMotor) numButtom = checkPortPC(0, 1);
 
-
+        switch(numButtom)
+        {
+            case 0:
+                goUpDown(1);
+                break;
+            case 1:
+            {
+                goUpDown(0);
+            }
+            default:{break;}
+        }
+    }
 }
