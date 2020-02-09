@@ -11,17 +11,18 @@ Variable                                                                        
 ------------------------------------------------------------------------------------------------
 PWMDir                                                                            R5           1
 statusMotor                                                                       R4           1
-numButtom                                                                         R7           1
-tampStop                                                                          R6           1
+numButtom                                                                         R6,R7        2
+tampUpStop                                                                        R9           1
+tampDownStop                                                                      R8           1
 
 FLASH Allocation [words]
 Function                                                                          Address   Size
 ------------------------------------------------------------------------------------------------
-initializationDefolt                                                              0x00C46     45
-initPWM                                                                           0x00C73      2
-checkPortPC                                                                       0x00C75     51
-PWM                                                                               0x00CA8     37
-goUpDown                                                                          0x00CCD     16
-main                                                                              0x00CDD      6
-exterInt0                                                                         0x00CE3     31
-exterInt1                                                                         0x00D02     45
+initializationDefolt                                                              0x00C47     43
+initPWM                                                                           0x00C72      2
+checkPortPC                                                                       0x00C74     63
+PWM                                                                               0x00CB3     37
+goUpDown                                                                          0x00CD8     16
+main                                                                              0x00CE8      6
+exterInt0                                                                         0x00CEE     36
+exterInt1                                                                         0x00D12     47

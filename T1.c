@@ -12,6 +12,8 @@
 #define PB3   (1<<3);
 #define PB4   (1<<4);
 
+#define PD0   (1<<0);
+#define PD1   (1<<1);
 #define PD4   (1<<4);
 #define PD5   (1<<5);
 #define PD6   (1<<6);
@@ -19,8 +21,9 @@
 
 bool PWMDir = 0;  // 0 - start, 1 - stop
 bool statusMotor = 0;  // 1 - worked, 0 - stopped
-bool numButtom;  // 0 - up, 1 - down
-bool tampStop = false;
+unsigned int numButtom;  // 0 - up, 1 - down
+bool tampUpStop = false;
+bool tampDownStop = false;
 
 void initializationDefolt()
 {
@@ -90,7 +93,6 @@ void initializationDefolt()
     // External Interrupt(s) initialization
     // INT0: Off
     // INT1: Off
-    MCUCR=(0<<ISC11) | (1<<ISC10) | (0<<ISC01) | (0<<ISC00);
     GICR|=(1<<INT1) | (1<<INT0);
     MCUCR=(0<<ISC11) | (1<<ISC10) | (1<<ISC01) | (0<<ISC00);
     GIFR=(0<<INTF1) | (0<<INTF0);
@@ -129,22 +131,28 @@ void initPWM()
     OCR2 = 0x00;
 }
 
-int checkPortPC(int i, int n)
+unsigned int checkPortPC(int i, int n)
 {
+
     int j = 0, k = 0;
+    delay_ms(50);
     for(i; i <= n; i++)
     {
         if(~PINC & (1<<i))
         {
+            PORTD |= (1<<i);
             j = i;
             k++;
+            PORTD &= ~(1<<i);
         }
     }
     if(k == 1)
     {
+
         return j;
     }
-    else return 255;
+    else {PORTD |= PD4;
+       PORTD &= ~PD4;return 255;}
 }
 
 void PWM()
@@ -173,15 +181,15 @@ void PWM()
     }
     TCCR2 = 0x00; //stop timer
     OCR2 = 0x00;
-    if(PWMDir) PORTB |= (1<<3);
-    else PORTB &= ~(1<<3);
+    if(PWMDir) PORTB |= PB3;
+    else PORTB &= ~PB3;
     return;
 }
 
 void goUpDown(char dir) //1 - up, 0 - down
 {
-   if (dir) PORTB |= PB3;
-   else PORTB &= ~PB3;
+   if (dir) PORTB |= PB4;
+   else PORTB &= ~PB4;
    PWM();
    if(statusMotor == 0)
    statusMotor = 1;
@@ -206,15 +214,22 @@ interrupt [EXT_INT0] void exterInt0(void)
     {
        switch(checkPortPC(2, 3))
        {
-           case 2:PORTD |= (1<<5);
+           case 2:PORTD |= PD5;
                statusMotor = 0;
                PWMDir = false;
-               tampStop = true;
-               PORTB &= ~(1<<3);
+               tampUpStop = true;
+               PORTB &= ~PB3;
+               PORTD &= ~PD5;
                break;
            case 3:
+               //PORTD |= PD4;
+               statusMotor = 0;
+               PWMDir = false;
+               tampDownStop = true;
+               PORTB &= ~PB3;
+               //PORTD &= ~PD4;
                break;
-           default:{PORTD |= (1<<6); break;}
+           default: break;
        }
     }
     else return;
@@ -223,25 +238,33 @@ interrupt [EXT_INT0] void exterInt0(void)
 
 interrupt [EXT_INT1] void exterInt1(void)     // interupt buttom control
 {
-    if(tampStop)
-    {
-        tampStop = false;
-        return;
-    }
-    else
-    {
-        if(!statusMotor) numButtom = checkPortPC(0, 1);
+    PORTD |= PD6;
+        if(!statusMotor) {PORTD |= PD1; numButtom = checkPortPC(0, 1);}
 
         switch(numButtom)
         {
             case 0:
-                goUpDown(1);
+
+                if(tampUpStop) return;
+                else
+                {
+                    tampDownStop = false;
+                    goUpDown(1);
+                }
+
                 break;
             case 1:
-            {
-                goUpDown(0);
-            }
+                //PORTD |= PD0;
+                if(tampDownStop) return;
+                else
+                {
+                    tampUpStop = false;
+                    goUpDown(0);
+                }
+                break;
+                //PORTD &= ~PD0;
             default:{break;}
         }
-    }
+    PORTD &= ~PD6;
+    PORTD &= ~PD1;
 }
