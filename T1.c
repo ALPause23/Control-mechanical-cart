@@ -8,6 +8,7 @@
 #define PC1   (1<<1); // назад
 #define PC2   (1<<2); // тампер впереди
 #define PC3   (1<<3); // тампер сзади
+#define PC4   (1<<4); // Препятствие на направляющей
 
 #define PB3   (1<<3);
 #define PB4   (1<<4);
@@ -159,12 +160,12 @@ void PWM()
 {
     if(PWMDir == 0)
     {
-        OCR2 = 0x00;
+        OCR2 = 0x66;
         TCCR2 = 0b01101100; //start timer
         while(OCR2 != 0xFF)
         {
             OCR2++;
-            delay_ms(3);
+            delay_ms(13);
         }
         PWMDir = 1;
     }
@@ -172,10 +173,10 @@ void PWM()
     {
         OCR2 = 0xFF;
         TCCR2 = 0b01101100; //start timer
-        while(OCR2 != 0x00)
+        while(OCR2 != 0x66)
         {
             OCR2--;
-            delay_ms(3);
+            delay_ms(13);
         }
         PWMDir = 0;
     }
@@ -204,7 +205,12 @@ void main()
     #asm("sei")
     while (1)
     {
-
+        if(PINC & (1<<4))
+       {
+            PORTB &= ~PB3;
+            //statusMotor = 0;
+            PWMDir = false;
+       }
     }
 }
 
@@ -212,7 +218,7 @@ interrupt [EXT_INT0] void exterInt0(void)
 {   PORTD |= PD7;
     if (statusMotor)
     {
-       switch(checkPortPC(2, 3))
+       switch(checkPortPC(2, 2))
        {
            case 2:PORTD |= PD5;
                statusMotor = 0;
@@ -231,6 +237,7 @@ interrupt [EXT_INT0] void exterInt0(void)
                break;
            default: break;
        }
+
     }
     else return;
     PORTD &= ~PD7;
