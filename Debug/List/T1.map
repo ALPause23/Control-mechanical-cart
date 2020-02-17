@@ -20,9 +20,9 @@ Function                                                                        
 ------------------------------------------------------------------------------------------------
 initializationDefolt                                                              0x00C47     43
 initPWM                                                                           0x00C72      2
-checkPortPC                                                                       0x00C74     63
-PWM                                                                               0x00CB3     37
-goUpDown                                                                          0x00CD8     16
-main                                                                              0x00CE8     10
-exterInt0                                                                         0x00CF2     36
-exterInt1                                                                         0x00D16     47
+checkPortPC                                                                       0x00C74     60
+PWM                                                                               0x00CB0     37
+goUpDown                                                                          0x00CD5     16
+main                                                                              0x00CE5     16
+exterInt0                                                                         0x00CF5     33
+exterInt1                                                                         0x00D16     49

@@ -12,6 +12,9 @@
 
 #define PB3   (1<<3);
 #define PB4   (1<<4);
+#define PB5   (1<<5); //тампер дальний (up)
+#define PB6   (1<<6); //тампер ближний (down)
+#define PB7   (1<<7); //препятствие
 
 #define PD0   (1<<0);
 #define PD1   (1<<1);
@@ -33,7 +36,7 @@ void initializationDefolt()
     // Input/Output Ports initialization
     // Port B initialization
     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=OUT Bit2=In Bit1=In Bit0=In
-    DDRB=(0<<DDB7) | (0<<DDB6) | (0<<DDB5) | (1<<DDB4) | (1<<DDB3) | (0<<DDB2) | (0<<DDB1) | (0<<DDB0);
+    DDRB=(1<<DDB7) | (1<<DDB6) | (1<<DDB5) | (1<<DDB4) | (1<<DDB3) | (0<<DDB2) | (0<<DDB1) | (0<<DDB0);
     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
     PORTB=(0<<PORTB7) | (0<<PORTB6) | (0<<PORTB5) | (0<<PORTB4) | (0<<PORTB3) | (0<<PORTB2) | (0<<PORTB1) | (0<<PORTB0);
 
@@ -136,7 +139,7 @@ unsigned int checkPortPC(int i, int n)
 {
 
     int j = 0, k = 0;
-    delay_ms(50);
+
     for(i; i <= n; i++)
     {
         if(~PINC & (1<<i))
@@ -158,6 +161,7 @@ unsigned int checkPortPC(int i, int n)
 
 void PWM()
 {
+
     if(PWMDir == 0)
     {
         OCR2 = 0x66;
@@ -165,7 +169,7 @@ void PWM()
         while(OCR2 != 0xFF)
         {
             OCR2++;
-            delay_ms(13);
+            delay_ms(8);
         }
         PWMDir = 1;
     }
@@ -176,13 +180,13 @@ void PWM()
         while(OCR2 != 0x66)
         {
             OCR2--;
-            delay_ms(1);
+            delay_ms(8);
         }
         PWMDir = 0;
     }
     TCCR2 = 0x00; //stop timer
     OCR2 = 0x00;
-    if(PWMDir) PORTB |= PB3;
+    if(PWMDir) { PORTB |= PB3;}
     else PORTB &= ~PB3;
     return;
 }
@@ -205,48 +209,51 @@ void main()
     #asm("sei")
     while (1)
     {
-        if(PINC & (1<<4))
+       if(PINC & (1<<4))
        {
+            PORTB |= PB7;
+            tampUpStop = false;
+            tampDownStop = false;
             PORTB &= ~PB3;
-            //statusMotor = 0;
-            PWMDir = false;
+            statusMotor = 0;
+            PWMDir = 0;
        }
+       else PORTB &= ~PB7;
     }
 }
 
 interrupt [EXT_INT0] void exterInt0(void)
-{   PORTD |= PD7;
+{
     if (statusMotor)
     {
-       switch(checkPortPC(2, 2))
+       switch(checkPortPC(2, 3))
        {
-           case 2:PORTD |= PD5;
+           case 2:PORTB |= PB5;
                statusMotor = 0;
                PWMDir = false;
                tampUpStop = true;
                PORTB &= ~PB3;
-               PORTD &= ~PD5;
                break;
            case 3:
-               //PORTD |= PD4;
+               PORTB |= PB6;
                statusMotor = 0;
                PWMDir = false;
                tampDownStop = true;
                PORTB &= ~PB3;
-               //PORTD &= ~PD4;
+
                break;
            default: break;
        }
 
     }
     else return;
-    PORTD &= ~PD7;
+
 }
 
 interrupt [EXT_INT1] void exterInt1(void)     // interupt buttom control
 {
-    PORTD |= PD6;
-        if(!statusMotor) {PORTD |= PD1; numButtom = checkPortPC(0, 1);}
+
+        if(!statusMotor) {numButtom = checkPortPC(0, 1);}
 
         switch(numButtom)
         {
@@ -255,23 +262,26 @@ interrupt [EXT_INT1] void exterInt1(void)     // interupt buttom control
                 if(tampUpStop) return;
                 else
                 {
+                    PORTD |= PD7;
                     tampDownStop = false;
+                    PORTB &= ~PB6;
                     goUpDown(1);
+                    PORTD &= ~PD7;
                 }
 
                 break;
             case 1:
-                //PORTD |= PD0;
+
                 if(tampDownStop) return;
                 else
                 {
                     tampUpStop = false;
+                    PORTB &= ~PB5;
                     goUpDown(0);
                 }
                 break;
-                //PORTD &= ~PD0;
-            default:{break;}
+
+            default:{PORTD |= PD6;PORTD &= ~PD6;break;}
         }
-    PORTD &= ~PD6;
-    PORTD &= ~PD1;
+
 }
