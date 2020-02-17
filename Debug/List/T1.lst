@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.1.30  E:\GitHub\Control-mechanical-cart\Debug\List\T1.asm Mon Feb 17 19:47:31 2020
+AVRASM ver. 2.1.30  E:\GitHub\Control-mechanical-cart\Debug\List\T1.asm Tue Feb 18 02:22:55 2020
 
 E:\GitHub\Control-mechanical-cart\Debug\List\T1.asm(1086): warning: Register r5 already defined by the .DEF directive
 E:\GitHub\Control-mechanical-cart\Debug\List\T1.asm(1087): warning: Register r4 already defined by the .DEF directive
@@ -1108,8 +1108,8 @@ E:\GitHub\Control-mechanical-cart\Debug\List\T1.asm(1091): warning: Register r8 
                  
                  ;INTERRUPT VECTORS
 000c00 c019      	RJMP __RESET
-000c01 c0f3      	RJMP _exterInt0
-000c02 c113      	RJMP _exterInt1
+000c01 c116      	RJMP _exterInt0
+000c02 c13c      	RJMP _exterInt1
 000c03 cffc      	RJMP 0xC00
 000c04 cffb      	RJMP 0xC00
 000c05 cffa      	RJMP 0xC00
@@ -1208,7 +1208,7 @@ E:\GitHub\Control-mechanical-cart\Debug\List\T1.asm(1091): warning: Register r8 
 000c44 e6c0      	LDI  R28,LOW(__SRAM_START+__DSTACK_SIZE)
 000c45 e0d1      	LDI  R29,HIGH(__SRAM_START+__DSTACK_SIZE)
                  
-000c46 c09e      	RJMP _main
+000c46 c0be      	RJMP _main
                  
                  	.ESEG
                  	.ORG 0
@@ -1240,11 +1240,13 @@ E:\GitHub\Control-mechanical-cart\Debug\List\T1.asm(1091): warning: Register r8 
                  ;#define PC3   (1<<3); // тампер сзади
                  ;#define PC4   (1<<4); // Препятствие на направляющей
                  ;
-                 ;#define PB3   (1<<3);
-                 ;#define PB4   (1<<4);
-                 ;#define PB5   (1<<5); //тампер дальний (up)
-                 ;#define PB6   (1<<6); //тампер ближний (down)
-                 ;#define PB7   (1<<7); //препятствие
+                 ;#define PB0   (1<<0); // стрелка вперёд движения
+                 ;#define PB1   (1<<1); // стрелка  назад движения
+                 ;#define PB3   (1<<3); // PWM
+                 ;#define PB4   (1<<4); // direction
+                 ;#define PB5   (1<<5); // тампер дальний (up)
+                 ;#define PB6   (1<<6); // тампер ближний (down)
+                 ;#define PB7   (1<<7); // препятствие
                  ;
                  ;#define PD0   (1<<0);
                  ;#define PD1   (1<<1);
@@ -1260,692 +1262,784 @@ E:\GitHub\Control-mechanical-cart\Debug\List\T1.asm(1091): warning: Register r8 
                  ;bool tampDownStop = false;
                  ;
                  ;void initializationDefolt()
-                 ; 0000 0021 {
+                 ; 0000 0023 {
                  
                  	.CSEG
                  _initializationDefolt:
                  ; .FSTART _initializationDefolt
-                 ; 0000 0022     // Declare your local variables here
-                 ; 0000 0023 
-                 ; 0000 0024     // Input/Output Ports initialization
-                 ; 0000 0025     // Port B initialization
-                 ; 0000 0026     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=OUT Bit2=In Bit1=In Bit0=In
-                 ; 0000 0027     DDRB=(1<<DDB7) | (1<<DDB6) | (1<<DDB5) | (1<<DDB4) | (1<<DDB3) | (0<<DDB2) | (0<<DDB1) | (0<<DDB0);
-000c47 efe8      	LDI  R30,LOW(248)
+                 ; 0000 0024     // Declare your local variables here
+                 ; 0000 0025 
+                 ; 0000 0026     // Input/Output Ports initialization
+                 ; 0000 0027     // Port B initialization
+                 ; 0000 0028     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=OUT Bit2=In Bit1=In Bit0=In
+                 ; 0000 0029     DDRB=(1<<DDB7) | (1<<DDB6) | (1<<DDB5) | (1<<DDB4) | (1<<DDB3) | (0<<DDB2) | (1<<DDB1) | (1<<DDB0);
+000c47 efeb      	LDI  R30,LOW(251)
 000c48 bbe7      	OUT  0x17,R30
-                 ; 0000 0028     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
-                 ; 0000 0029     PORTB=(0<<PORTB7) | (0<<PORTB6) | (0<<PORTB5) | (0<<PORTB4) | (0<<PORTB3) | (0<<PORTB2) | (0<<PORTB1) | (0<<PORTB0);
+                 ; 0000 002A     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
+                 ; 0000 002B     PORTB=(0<<PORTB7) | (0<<PORTB6) | (0<<PORTB5) | (0<<PORTB4) | (0<<PORTB3) | (0<<PORTB2) | (0<<PORTB1) | (0<<PORTB0);
 000c49 e0e0      	LDI  R30,LOW(0)
 000c4a bbe8      	OUT  0x18,R30
-                 ; 0000 002A 
-                 ; 0000 002B     // Port C initialization
-                 ; 0000 002C     // Function: Bit6=In Bit5=In Bit4=In Bit3=In Bit2=In Bit1=In Bit0=In
-                 ; 0000 002D     DDRC=(0<<DDC6) | (0<<DDC5) | (0<<DDC4) | (1<<DDC3) | (0<<DDC2) | (0<<DDC1) | (0<<DDC0);
+                 ; 0000 002C 
+                 ; 0000 002D     // Port C initialization
+                 ; 0000 002E     // Function: Bit6=In Bit5=In Bit4=In Bit3=In Bit2=In Bit1=In Bit0=In
+                 ; 0000 002F     DDRC=(0<<DDC6) | (0<<DDC5) | (0<<DDC4) | (1<<DDC3) | (0<<DDC2) | (0<<DDC1) | (0<<DDC0);
 000c4b e0e8      	LDI  R30,LOW(8)
 000c4c bbe4      	OUT  0x14,R30
-                 ; 0000 002E     // State: Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
-                 ; 0000 002F     PORTC=(0<<PORTC6) | (0<<PORTC5) | (0<<PORTC4) | (0<<PORTC3) | (0<<PORTC2) | (0<<PORTC1) | (0<<PORTC0);
+                 ; 0000 0030     // State: Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
+                 ; 0000 0031     PORTC=(0<<PORTC6) | (0<<PORTC5) | (0<<PORTC4) | (0<<PORTC3) | (0<<PORTC2) | (0<<PORTC1) | (0<<PORTC0);
 000c4d e0e0      	LDI  R30,LOW(0)
 000c4e bbe5      	OUT  0x15,R30
-                 ; 0000 0030 
-                 ; 0000 0031     // Port D initialization
-                 ; 0000 0032     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=In Bit2=In Bit1=In Bit0=In
-                 ; 0000 0033     DDRD=(1<<DDD7) | (1<<DDD6) | (1<<DDD5) | (1<<DDD4) | (0<<DDD3) | (0<<DDD2) | (1<<DDD1) | (1<<DDD0);
+                 ; 0000 0032 
+                 ; 0000 0033     // Port D initialization
+                 ; 0000 0034     // Function: Bit7=In Bit6=In Bit5=In Bit4=In Bit3=In Bit2=In Bit1=In Bit0=In
+                 ; 0000 0035     DDRD=(1<<DDD7) | (1<<DDD6) | (1<<DDD5) | (1<<DDD4) | (0<<DDD3) | (0<<DDD2) | (1<<DDD1) | (1<<DDD0);
 000c4f efe3      	LDI  R30,LOW(243)
 000c50 bbe1      	OUT  0x11,R30
-                 ; 0000 0034     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
-                 ; 0000 0035     PORTD=(0<<PORTD7) | (0<<PORTD6) | (0<<PORTD5) | (0<<PORTD4) | (0<<PORTD3) | (0<<PORTD2) | (0<<PORTD1) | (0<<PORTD0);
+                 ; 0000 0036     // State: Bit7=T Bit6=T Bit5=T Bit4=T Bit3=T Bit2=T Bit1=T Bit0=T
+                 ; 0000 0037     PORTD=(0<<PORTD7) | (0<<PORTD6) | (0<<PORTD5) | (0<<PORTD4) | (0<<PORTD3) | (0<<PORTD2) | (0<<PORTD1) | (0<<PORTD0);
 000c51 e0e0      	LDI  R30,LOW(0)
 000c52 bbe2      	OUT  0x12,R30
-                 ; 0000 0036 
-                 ; 0000 0037     // Timer/Counter 0 initialization
-                 ; 0000 0038     // Clock source: System Clock
-                 ; 0000 0039     // Clock value: Timer 0 Stopped
-                 ; 0000 003A     TCCR0=(0<<CS02) | (0<<CS01) | (0<<CS00);
+                 ; 0000 0038 
+                 ; 0000 0039     // Timer/Counter 0 initialization
+                 ; 0000 003A     // Clock source: System Clock
+                 ; 0000 003B     // Clock value: Timer 0 Stopped
+                 ; 0000 003C     TCCR0=(0<<CS02) | (0<<CS01) | (0<<CS00);
 000c53 bfe3      	OUT  0x33,R30
-                 ; 0000 003B     TCNT0=0x00;
+                 ; 0000 003D     TCNT0=0x00;
 000c54 bfe2      	OUT  0x32,R30
-                 ; 0000 003C 
-                 ; 0000 003D     // Timer/Counter 1 initialization
-                 ; 0000 003E     // Clock source: System Clock
-                 ; 0000 003F     // Clock value: Timer1 Stopped
-                 ; 0000 0040     // Mode: Normal top=0xFFFF
-                 ; 0000 0041     // OC1A output: Disconnected
-                 ; 0000 0042     // OC1B output: Disconnected
-                 ; 0000 0043     // Noise Canceler: Off
-                 ; 0000 0044     // Input Capture on Falling Edge
-                 ; 0000 0045     // Timer1 Overflow Interrupt: Off
-                 ; 0000 0046     // Input Capture Interrupt: Off
-                 ; 0000 0047     // Compare A Match Interrupt: Off
-                 ; 0000 0048     // Compare B Match Interrupt: Off
-                 ; 0000 0049     TCCR1A=(0<<COM1A1) | (0<<COM1A0) | (0<<COM1B1) | (0<<COM1B0) | (0<<WGM11) | (0<<WGM10);
+                 ; 0000 003E 
+                 ; 0000 003F     // Timer/Counter 1 initialization
+                 ; 0000 0040     // Clock source: System Clock
+                 ; 0000 0041     // Clock value: Timer1 Stopped
+                 ; 0000 0042     // Mode: Normal top=0xFFFF
+                 ; 0000 0043     // OC1A output: Disconnected
+                 ; 0000 0044     // OC1B output: Disconnected
+                 ; 0000 0045     // Noise Canceler: Off
+                 ; 0000 0046     // Input Capture on Falling Edge
+                 ; 0000 0047     // Timer1 Overflow Interrupt: Off
+                 ; 0000 0048     // Input Capture Interrupt: Off
+                 ; 0000 0049     // Compare A Match Interrupt: Off
+                 ; 0000 004A     // Compare B Match Interrupt: Off
+                 ; 0000 004B     TCCR1A=(0<<COM1A1) | (0<<COM1A0) | (0<<COM1B1) | (0<<COM1B0) | (0<<WGM11) | (0<<WGM10);
 000c55 bdef      	OUT  0x2F,R30
-                 ; 0000 004A     TCCR1B=(0<<ICNC1) | (0<<ICES1) | (0<<WGM13) | (0<<WGM12) | (0<<CS12) | (0<<CS11) | (0<<CS10);
+                 ; 0000 004C     TCCR1B=(0<<ICNC1) | (0<<ICES1) | (0<<WGM13) | (0<<WGM12) | (0<<CS12) | (0<<CS11) | (0<<CS10);
 000c56 bdee      	OUT  0x2E,R30
-                 ; 0000 004B     TCNT1H=0x00;
+                 ; 0000 004D     TCNT1H=0x00;
 000c57 bded      	OUT  0x2D,R30
-                 ; 0000 004C     TCNT1L=0x00;
+                 ; 0000 004E     TCNT1L=0x00;
 000c58 bdec      	OUT  0x2C,R30
-                 ; 0000 004D     ICR1H=0x00;
+                 ; 0000 004F     ICR1H=0x00;
 000c59 bde7      	OUT  0x27,R30
-                 ; 0000 004E     ICR1L=0x00;
+                 ; 0000 0050     ICR1L=0x00;
 000c5a bde6      	OUT  0x26,R30
-                 ; 0000 004F     OCR1AH=0x00;
+                 ; 0000 0051     OCR1AH=0x00;
 000c5b bdeb      	OUT  0x2B,R30
-                 ; 0000 0050     OCR1AL=0x00;
+                 ; 0000 0052     OCR1AL=0x00;
 000c5c bdea      	OUT  0x2A,R30
-                 ; 0000 0051     OCR1BH=0x00;
+                 ; 0000 0053     OCR1BH=0x00;
 000c5d bde9      	OUT  0x29,R30
-                 ; 0000 0052     OCR1BL=0x00;
+                 ; 0000 0054     OCR1BL=0x00;
 000c5e bde8      	OUT  0x28,R30
-                 ; 0000 0053 
-                 ; 0000 0054     // Timer/Counter 2 initialization
-                 ; 0000 0055     // Clock source: System Clock
-                 ; 0000 0056     // Clock value: Timer2 Stopped
-                 ; 0000 0057     // Mode: Normal top=0xFF
-                 ; 0000 0058     // OC2 output: Disconnected
-                 ; 0000 0059     ASSR=0<<AS2;
-000c5f d0e7      	RCALL SUBOPT_0x0
-                 ; 0000 005A     TCCR2=(0<<PWM2) | (0<<COM21) | (0<<COM20) | (0<<CTC2) | (0<<CS22) | (0<<CS21) | (0<<CS20);
-                 ; 0000 005B     TCNT2=0x00;
-                 ; 0000 005C     OCR2=0x00;
-                 ; 0000 005D 
-                 ; 0000 005E     // Timer(s)/Counter(s) Interrupt(s) initialization
-                 ; 0000 005F     TIMSK=(0<<OCIE2) | (0<<TOIE2) | (0<<TICIE1) | (0<<OCIE1A) | (0<<OCIE1B) | (0<<TOIE1) | (0<<TOIE0);
+                 ; 0000 0055 
+                 ; 0000 0056     // Timer/Counter 2 initialization
+                 ; 0000 0057     // Clock source: System Clock
+                 ; 0000 0058     // Clock value: Timer2 Stopped
+                 ; 0000 0059     // Mode: Normal top=0xFF
+                 ; 0000 005A     // OC2 output: Disconnected
+                 ; 0000 005B     ASSR=0<<AS2;
+000c5f d110      	RCALL SUBOPT_0x0
+                 ; 0000 005C     TCCR2=(0<<PWM2) | (0<<COM21) | (0<<COM20) | (0<<CTC2) | (0<<CS22) | (0<<CS21) | (0<<CS20);
+                 ; 0000 005D     TCNT2=0x00;
+                 ; 0000 005E     OCR2=0x00;
+                 ; 0000 005F 
+                 ; 0000 0060     // Timer(s)/Counter(s) Interrupt(s) initialization
+                 ; 0000 0061     TIMSK=(0<<OCIE2) | (0<<TOIE2) | (0<<TICIE1) | (0<<OCIE1A) | (0<<OCIE1B) | (0<<TOIE1) | (0<<TOIE0);
 000c60 e0e0      	LDI  R30,LOW(0)
 000c61 bfe9      	OUT  0x39,R30
-                 ; 0000 0060 
-                 ; 0000 0061     // External Interrupt(s) initialization
-                 ; 0000 0062     // INT0: Off
-                 ; 0000 0063     // INT1: Off
-                 ; 0000 0064     GICR|=(1<<INT1) | (1<<INT0);
+                 ; 0000 0062 
+                 ; 0000 0063     // External Interrupt(s) initialization
+                 ; 0000 0064     // INT0: Off
+                 ; 0000 0065     // INT1: Off
+                 ; 0000 0066     GICR|=(1<<INT1) | (1<<INT0);
 000c62 b7eb      	IN   R30,0x3B
 000c63 6ce0      	ORI  R30,LOW(0xC0)
 000c64 bfeb      	OUT  0x3B,R30
-                 ; 0000 0065     MCUCR=(0<<ISC11) | (1<<ISC10) | (1<<ISC01) | (0<<ISC00);
+                 ; 0000 0067     MCUCR=(0<<ISC11) | (1<<ISC10) | (1<<ISC01) | (0<<ISC00);
 000c65 e0e6      	LDI  R30,LOW(6)
 000c66 bfe5      	OUT  0x35,R30
-                 ; 0000 0066     GIFR=(0<<INTF1) | (0<<INTF0);
+                 ; 0000 0068     GIFR=(0<<INTF1) | (0<<INTF0);
 000c67 e0e0      	LDI  R30,LOW(0)
 000c68 bfea      	OUT  0x3A,R30
-                 ; 0000 0067 
-                 ; 0000 0068     // USART initialization
-                 ; 0000 0069     // USART disabled
-                 ; 0000 006A     UCSRB=(0<<RXCIE) | (0<<TXCIE) | (0<<UDRIE) | (0<<RXEN) | (0<<TXEN) | (0<<UCSZ2) | (0<<RXB8) | (0<<TXB8);
+                 ; 0000 0069 
+                 ; 0000 006A     // USART initialization
+                 ; 0000 006B     // USART disabled
+                 ; 0000 006C     UCSRB=(0<<RXCIE) | (0<<TXCIE) | (0<<UDRIE) | (0<<RXEN) | (0<<TXEN) | (0<<UCSZ2) | (0<<RXB8) | (0<<TXB8);
 000c69 b9ea      	OUT  0xA,R30
-                 ; 0000 006B 
-                 ; 0000 006C     // Analog Comparator initialization
-                 ; 0000 006D     // Analog Comparator: Off
-                 ; 0000 006E     // The Analog Comparator's positive input is
-                 ; 0000 006F     // connected to the AIN0 pin
-                 ; 0000 0070     // The Analog Comparator's negative input is
-                 ; 0000 0071     // connected to the AIN1 pin
-                 ; 0000 0072     ACSR=(1<<ACD) | (0<<ACBG) | (0<<ACO) | (0<<ACI) | (0<<ACIE) | (0<<ACIC) | (0<<ACIS1) | (0<<ACIS0);
+                 ; 0000 006D 
+                 ; 0000 006E     // Analog Comparator initialization
+                 ; 0000 006F     // Analog Comparator: Off
+                 ; 0000 0070     // The Analog Comparator's positive input is
+                 ; 0000 0071     // connected to the AIN0 pin
+                 ; 0000 0072     // The Analog Comparator's negative input is
+                 ; 0000 0073     // connected to the AIN1 pin
+                 ; 0000 0074     ACSR=(1<<ACD) | (0<<ACBG) | (0<<ACO) | (0<<ACI) | (0<<ACIE) | (0<<ACIC) | (0<<ACIS1) | (0<<ACIS0);
 000c6a e8e0      	LDI  R30,LOW(128)
 000c6b b9e8      	OUT  0x8,R30
-                 ; 0000 0073     SFIOR=(0<<ACME);
+                 ; 0000 0075     SFIOR=(0<<ACME);
 000c6c e0e0      	LDI  R30,LOW(0)
 000c6d bfe0      	OUT  0x30,R30
-                 ; 0000 0074 
-                 ; 0000 0075     // ADC initialization
-                 ; 0000 0076     // ADC disabled
-                 ; 0000 0077     ADCSRA=(0<<ADEN) | (0<<ADSC) | (0<<ADFR) | (0<<ADIF) | (0<<ADIE) | (0<<ADPS2) | (0<<ADPS1) | (0<<ADPS0);
+                 ; 0000 0076 
+                 ; 0000 0077     // ADC initialization
+                 ; 0000 0078     // ADC disabled
+                 ; 0000 0079     ADCSRA=(0<<ADEN) | (0<<ADSC) | (0<<ADFR) | (0<<ADIF) | (0<<ADIE) | (0<<ADPS2) | (0<<ADPS1) | (0<<ADPS0);
 000c6e b9e6      	OUT  0x6,R30
-                 ; 0000 0078 
-                 ; 0000 0079     // SPI initialization
-                 ; 0000 007A     // SPI disabled
-                 ; 0000 007B     SPCR=(0<<SPIE) | (0<<SPE) | (0<<DORD) | (0<<MSTR) | (0<<CPOL) | (0<<CPHA) | (0<<SPR1) | (0<<SPR0);
+                 ; 0000 007A 
+                 ; 0000 007B     // SPI initialization
+                 ; 0000 007C     // SPI disabled
+                 ; 0000 007D     SPCR=(0<<SPIE) | (0<<SPE) | (0<<DORD) | (0<<MSTR) | (0<<CPOL) | (0<<CPHA) | (0<<SPR1) | (0<<SPR0);
 000c6f b9ed      	OUT  0xD,R30
-                 ; 0000 007C 
-                 ; 0000 007D     // TWI initialization
-                 ; 0000 007E     // TWI disabled
-                 ; 0000 007F     TWCR=(0<<TWEA) | (0<<TWSTA) | (0<<TWSTO) | (0<<TWEN) | (0<<TWIE);
+                 ; 0000 007E 
+                 ; 0000 007F     // TWI initialization
+                 ; 0000 0080     // TWI disabled
+                 ; 0000 0081     TWCR=(0<<TWEA) | (0<<TWSTA) | (0<<TWSTO) | (0<<TWEN) | (0<<TWIE);
 000c70 bfe6      	OUT  0x36,R30
-                 ; 0000 0080 }
+                 ; 0000 0082 }
 000c71 9508      	RET
                  ; .FEND
                  ;
                  ;void initPWM()
-                 ; 0000 0083 {
+                 ; 0000 0085 {
                  _initPWM:
                  ; .FSTART _initPWM
-                 ; 0000 0084     ASSR = 0x00;
-000c72 d0d4      	RCALL SUBOPT_0x0
-                 ; 0000 0085     TCCR2 = 0x00;    // таймер отключён
-                 ; 0000 0086     TCNT2 = 0x00;
-                 ; 0000 0087     OCR2 = 0x00;
-                 ; 0000 0088 }
+                 ; 0000 0086     ASSR = 0x00;
+000c72 d0fd      	RCALL SUBOPT_0x0
+                 ; 0000 0087     TCCR2 = 0x00;    // таймер отключён
+                 ; 0000 0088     TCNT2 = 0x00;
+                 ; 0000 0089     OCR2 = 0x00;
+                 ; 0000 008A }
 000c73 9508      	RET
                  ; .FEND
                  ;
+                 ;void ledArrowControl(char dir, bool onOff)
+                 ; 0000 008D {
+                 _ledArrowControl:
+                 ; .FSTART _ledArrowControl
+                 ; 0000 008E     switch(dir)
+000c74 93aa      	ST   -Y,R26
+                 ;	dir -> Y+1
+                 ;	onOff -> Y+0
+000c75 81e9      	LDD  R30,Y+1
+000c76 e0f0      	LDI  R31,0
+                 ; 0000 008F     {
+                 ; 0000 0090         case 'u': if (onOff) PORTB |= PB0;
+000c77 37e5      	CPI  R30,LOW(0x75)
+000c78 e0a0      	LDI  R26,HIGH(0x75)
+000c79 07fa      	CPC  R31,R26
+000c7a f449      	BRNE _0x6
+000c7b 81e8      	LD   R30,Y
+000c7c 30e0      	CPI  R30,0
+000c7d f011      	BREQ _0x7
+000c7e 9ac0      	SBI  0x18,0
+                 ; 0000 0091                 else PORTB &= ~((1<<0)|(1<<1));
+000c7f c003      	RJMP _0x8
+                 _0x7:
+000c80 b3e8      	IN   R30,0x18
+000c81 7fec      	ANDI R30,LOW(0xFC)
+000c82 bbe8      	OUT  0x18,R30
+                 ; 0000 0092                 break;
+                 _0x8:
+000c83 c00c      	RJMP _0x5
+                 ; 0000 0093         case 'd': if (onOff) PORTB |= PB1;
+                 _0x6:
+000c84 36e4      	CPI  R30,LOW(0x64)
+000c85 e0a0      	LDI  R26,HIGH(0x64)
+000c86 07fa      	CPC  R31,R26
+000c87 f441      	BRNE _0x5
+000c88 81e8      	LD   R30,Y
+000c89 30e0      	CPI  R30,0
+000c8a f011      	BREQ _0xA
+000c8b 9ac1      	SBI  0x18,1
+                 ; 0000 0094                 else PORTB &= ~((1<<0)|(1<<1));
+000c8c c003      	RJMP _0xB
+                 _0xA:
+000c8d b3e8      	IN   R30,0x18
+000c8e 7fec      	ANDI R30,LOW(0xFC)
+000c8f bbe8      	OUT  0x18,R30
+                 ; 0000 0095                 break;
+                 _0xB:
+                 ; 0000 0096     }
+                 _0x5:
+                 ; 0000 0097 }
+000c90 9622      	ADIW R28,2
+000c91 9508      	RET
+                 ; .FEND
+                 ;
                  ;unsigned int checkPortPC(int i, int n)
-                 ; 0000 008B {
+                 ; 0000 009A {
                  _checkPortPC:
                  ; .FSTART _checkPortPC
-                 ; 0000 008C 
-                 ; 0000 008D     int j = 0, k = 0;
-                 ; 0000 008E 
-                 ; 0000 008F     for(i; i <= n; i++)
-000c74 93ba      	ST   -Y,R27
-000c75 93aa      	ST   -Y,R26
-000c76 d109      	RCALL __SAVELOCR4
+                 ; 0000 009B 
+                 ; 0000 009C     int j = 0, k = 0;
+                 ; 0000 009D 
+                 ; 0000 009E     for(i; i <= n; i++)
+000c92 93ba      	ST   -Y,R27
+000c93 93aa      	ST   -Y,R26
+000c94 d11c      	RCALL __SAVELOCR4
                  ;	i -> Y+6
                  ;	n -> Y+4
                  ;	j -> R16,R17
                  ;	k -> R18,R19
                 +
-000c77 e000     +LDI R16 , LOW ( 0 )
-000c78 e010     +LDI R17 , HIGH ( 0 )
+000c95 e000     +LDI R16 , LOW ( 0 )
+000c96 e010     +LDI R17 , HIGH ( 0 )
                  	__GETWRN 16,17,0
                 +
-000c79 e020     +LDI R18 , LOW ( 0 )
-000c7a e030     +LDI R19 , HIGH ( 0 )
+000c97 e020     +LDI R18 , LOW ( 0 )
+000c98 e030     +LDI R19 , HIGH ( 0 )
                  	__GETWRN 18,19,0
-000c7b 81ee      	LDD  R30,Y+6
-000c7c 81ff      	LDD  R31,Y+6+1
-                 _0x4:
-000c7d 81ec      	LDD  R30,Y+4
-000c7e 81fd      	LDD  R31,Y+4+1
-000c7f 81ae      	LDD  R26,Y+6
-000c80 81bf      	LDD  R27,Y+6+1
-000c81 17ea      	CP   R30,R26
-000c82 07fb      	CPC  R31,R27
-000c83 f0f4      	BRLT _0x5
-                 ; 0000 0090     {
-                 ; 0000 0091         if(~PINC & (1<<i))
-000c84 b3e3      	IN   R30,0x13
-000c85 95e0      	COM  R30
-000c86 2e1e      	MOV  R1,R30
-000c87 81ee      	LDD  R30,Y+6
-000c88 e0a1      	LDI  R26,LOW(1)
-000c89 e0b0      	LDI  R27,HIGH(1)
-000c8a d0ec      	RCALL __LSLW12
-000c8b 2da1      	MOV  R26,R1
-000c8c e0b0      	LDI  R27,0
-000c8d 23ea      	AND  R30,R26
-000c8e 23fb      	AND  R31,R27
-000c8f 9730      	SBIW R30,0
-000c90 f059      	BREQ _0x6
-                 ; 0000 0092         {
-                 ; 0000 0093             PORTD |= (1<<i);
-000c91 d0bb      	RCALL SUBOPT_0x1
-000c92 29e1      	OR   R30,R1
-000c93 bbe2      	OUT  0x12,R30
-                 ; 0000 0094             j = i;
+000c99 81ee      	LDD  R30,Y+6
+000c9a 81ff      	LDD  R31,Y+6+1
+                 _0xD:
+000c9b 81ec      	LDD  R30,Y+4
+000c9c 81fd      	LDD  R31,Y+4+1
+000c9d 81ae      	LDD  R26,Y+6
+000c9e 81bf      	LDD  R27,Y+6+1
+000c9f 17ea      	CP   R30,R26
+000ca0 07fb      	CPC  R31,R27
+000ca1 f0f4      	BRLT _0xE
+                 ; 0000 009F     {
+                 ; 0000 00A0         if(~PINC & (1<<i))
+000ca2 b3e3      	IN   R30,0x13
+000ca3 95e0      	COM  R30
+000ca4 2e1e      	MOV  R1,R30
+000ca5 81ee      	LDD  R30,Y+6
+000ca6 e0a1      	LDI  R26,LOW(1)
+000ca7 e0b0      	LDI  R27,HIGH(1)
+000ca8 d0ff      	RCALL __LSLW12
+000ca9 2da1      	MOV  R26,R1
+000caa e0b0      	LDI  R27,0
+000cab 23ea      	AND  R30,R26
+000cac 23fb      	AND  R31,R27
+000cad 9730      	SBIW R30,0
+000cae f059      	BREQ _0xF
+                 ; 0000 00A1         {
+                 ; 0000 00A2             PORTD |= (1<<i);
+000caf d0c6      	RCALL SUBOPT_0x1
+000cb0 29e1      	OR   R30,R1
+000cb1 bbe2      	OUT  0x12,R30
+                 ; 0000 00A3             j = i;
                 +
-000c94 810e     +LDD R16 , Y + 6
-000c95 811f     +LDD R17 , Y + 6 + 1
+000cb2 810e     +LDD R16 , Y + 6
+000cb3 811f     +LDD R17 , Y + 6 + 1
                  	__GETWRS 16,17,6
-                 ; 0000 0095             k++;
+                 ; 0000 00A4             k++;
                 +
-000c96 5f2f     +SUBI R18 , LOW ( - 1 )
-000c97 4f3f     +SBCI R19 , HIGH ( - 1 )
+000cb4 5f2f     +SUBI R18 , LOW ( - 1 )
+000cb5 4f3f     +SBCI R19 , HIGH ( - 1 )
                  	__ADDWRN 18,19,1
-                 ; 0000 0096             PORTD &= ~(1<<i);
-000c98 d0b4      	RCALL SUBOPT_0x1
-000c99 95e0      	COM  R30
-000c9a 21e1      	AND  R30,R1
-000c9b bbe2      	OUT  0x12,R30
-                 ; 0000 0097         }
-                 ; 0000 0098     }
-                 _0x6:
-000c9c 81ee      	LDD  R30,Y+6
-000c9d 81ff      	LDD  R31,Y+6+1
-000c9e 9631      	ADIW R30,1
-000c9f 83ee      	STD  Y+6,R30
-000ca0 83ff      	STD  Y+6+1,R31
-000ca1 cfdb      	RJMP _0x4
-                 _0x5:
-                 ; 0000 0099     if(k == 1)
-000ca2 e0e1      	LDI  R30,LOW(1)
-000ca3 e0f0      	LDI  R31,HIGH(1)
-000ca4 17e2      	CP   R30,R18
-000ca5 07f3      	CPC  R31,R19
-000ca6 f411      	BRNE _0x7
-                 ; 0000 009A     {
-                 ; 0000 009B 
-                 ; 0000 009C         return j;
-000ca7 01f8      	MOVW R30,R16
-000ca8 c004      	RJMP _0x2000001
-                 ; 0000 009D     }
-                 ; 0000 009E     else {PORTD |= PD4;
-                 _0x7:
-000ca9 9a94      	SBI  0x12,4
-                 ; 0000 009F        PORTD &= ~PD4;return 255;}
-000caa 9894      	CBI  0x12,4
-000cab efef      	LDI  R30,LOW(255)
-000cac e0f0      	LDI  R31,HIGH(255)
-                 ; 0000 00A0 }
-                 _0x2000001:
-000cad d0d7      	RCALL __LOADLOCR4
-000cae 9628      	ADIW R28,8
-000caf 9508      	RET
+                 ; 0000 00A5             PORTD &= ~(1<<i);
+000cb6 d0bf      	RCALL SUBOPT_0x1
+000cb7 95e0      	COM  R30
+000cb8 21e1      	AND  R30,R1
+000cb9 bbe2      	OUT  0x12,R30
+                 ; 0000 00A6         }
+                 ; 0000 00A7     }
+                 _0xF:
+000cba 81ee      	LDD  R30,Y+6
+000cbb 81ff      	LDD  R31,Y+6+1
+000cbc 9631      	ADIW R30,1
+000cbd 83ee      	STD  Y+6,R30
+000cbe 83ff      	STD  Y+6+1,R31
+000cbf cfdb      	RJMP _0xD
+                 _0xE:
+                 ; 0000 00A8     if(k == 1)
+000cc0 e0e1      	LDI  R30,LOW(1)
+000cc1 e0f0      	LDI  R31,HIGH(1)
+000cc2 17e2      	CP   R30,R18
+000cc3 07f3      	CPC  R31,R19
+000cc4 f411      	BRNE _0x10
+                 ; 0000 00A9     {
+                 ; 0000 00AA 
+                 ; 0000 00AB         return j;
+000cc5 01f8      	MOVW R30,R16
+000cc6 c004      	RJMP _0x2000002
+                 ; 0000 00AC     }
+                 ; 0000 00AD     else {PORTD |= PD4;
+                 _0x10:
+000cc7 9a94      	SBI  0x12,4
+                 ; 0000 00AE        PORTD &= ~PD4;return 255;}
+000cc8 9894      	CBI  0x12,4
+000cc9 efef      	LDI  R30,LOW(255)
+000cca e0f0      	LDI  R31,HIGH(255)
+                 ; 0000 00AF }
+                 _0x2000002:
+000ccb d0ea      	RCALL __LOADLOCR4
+000ccc 9628      	ADIW R28,8
+000ccd 9508      	RET
                  ; .FEND
                  ;
-                 ;void PWM()
-                 ; 0000 00A3 {
+                 ;void PWM(char dir)
+                 ; 0000 00B2 {
                  _PWM:
                  ; .FSTART _PWM
-                 ; 0000 00A4 
-                 ; 0000 00A5     if(PWMDir == 0)
-000cb0 2055      	TST  R5
-000cb1 f471      	BRNE _0x9
-                 ; 0000 00A6     {
-                 ; 0000 00A7         OCR2 = 0x66;
-000cb2 e6e6      	LDI  R30,LOW(102)
-000cb3 bde3      	OUT  0x23,R30
-                 ; 0000 00A8         TCCR2 = 0b01101100; //start timer
-000cb4 e6ec      	LDI  R30,LOW(108)
-000cb5 bde5      	OUT  0x25,R30
-                 ; 0000 00A9         while(OCR2 != 0xFF)
-                 _0xA:
-000cb6 b5e3      	IN   R30,0x23
-000cb7 3fef      	CPI  R30,LOW(0xFF)
-000cb8 f021      	BREQ _0xC
-                 ; 0000 00AA         {
-                 ; 0000 00AB             OCR2++;
-000cb9 b5e3      	IN   R30,0x23
-000cba 5fef      	SUBI R30,-LOW(1)
-000cbb d096      	RCALL SUBOPT_0x2
-                 ; 0000 00AC             delay_ms(7);
-                 ; 0000 00AD         }
-000cbc cff9      	RJMP _0xA
-                 _0xC:
-                 ; 0000 00AE         PWMDir = 1;
-000cbd e0e1      	LDI  R30,LOW(1)
-000cbe 2e5e      	MOV  R5,R30
-                 ; 0000 00AF     }
-                 ; 0000 00B0     else
-000cbf c00c      	RJMP _0xD
-                 _0x9:
-                 ; 0000 00B1     {
-                 ; 0000 00B2         OCR2 = 0xFF;
-000cc0 efef      	LDI  R30,LOW(255)
-000cc1 bde3      	OUT  0x23,R30
-                 ; 0000 00B3         TCCR2 = 0b01101100; //start timer
-000cc2 e6ec      	LDI  R30,LOW(108)
-000cc3 bde5      	OUT  0x25,R30
-                 ; 0000 00B4         while(OCR2 != 0x66)
-                 _0xE:
-000cc4 b5e3      	IN   R30,0x23
-000cc5 36e6      	CPI  R30,LOW(0x66)
-000cc6 f021      	BREQ _0x10
-                 ; 0000 00B5         {
-                 ; 0000 00B6             OCR2--;
-000cc7 b5e3      	IN   R30,0x23
-000cc8 50e1      	SUBI R30,LOW(1)
-000cc9 d088      	RCALL SUBOPT_0x2
-                 ; 0000 00B7             delay_ms(7);
-                 ; 0000 00B8         }
-000cca cff9      	RJMP _0xE
-                 _0x10:
-                 ; 0000 00B9         PWMDir = 0;
-000ccb 2455      	CLR  R5
-                 ; 0000 00BA     }
-                 _0xD:
-                 ; 0000 00BB     TCCR2 = 0x00; //stop timer
-000ccc e0e0      	LDI  R30,LOW(0)
-000ccd bde5      	OUT  0x25,R30
-                 ; 0000 00BC     OCR2 = 0x00;
-000cce bde3      	OUT  0x23,R30
-                 ; 0000 00BD     if(PWMDir) { PORTB |= PB3;}
+                 ; 0000 00B3 
+                 ; 0000 00B4     if(PWMDir == 0)
+000cce 93aa      	ST   -Y,R26
+                 ;	dir -> Y+0
 000ccf 2055      	TST  R5
-000cd0 f011      	BREQ _0x11
-000cd1 9ac3      	SBI  0x18,3
-                 ; 0000 00BE     else PORTB &= ~PB3;
-000cd2 c001      	RJMP _0x12
-                 _0x11:
-000cd3 98c3      	CBI  0x18,3
-                 ; 0000 00BF     return;
+000cd0 f471      	BRNE _0x12
+                 ; 0000 00B5     {
+                 ; 0000 00B6         OCR2 = 0x66;
+000cd1 e6e6      	LDI  R30,LOW(102)
+000cd2 d0a8      	RCALL SUBOPT_0x2
+                 ; 0000 00B7         TCCR2 = 0b01101100; //start timer
+                 ; 0000 00B8         ledArrowControl(dir, 1);
+000cd3 e0a1      	LDI  R26,LOW(1)
+000cd4 df9f      	RCALL _ledArrowControl
+                 ; 0000 00B9         while(OCR2 != 0xFF)
+                 _0x13:
+000cd5 b5e3      	IN   R30,0x23
+000cd6 3fef      	CPI  R30,LOW(0xFF)
+000cd7 f021      	BREQ _0x15
+                 ; 0000 00BA         {
+                 ; 0000 00BB             OCR2++;
+000cd8 b5e3      	IN   R30,0x23
+000cd9 5fef      	SUBI R30,-LOW(1)
+000cda d0a6      	RCALL SUBOPT_0x3
+                 ; 0000 00BC             delay_ms(7);
+                 ; 0000 00BD         }
+000cdb cff9      	RJMP _0x13
+                 _0x15:
+                 ; 0000 00BE         PWMDir = 1;
+000cdc e0e1      	LDI  R30,LOW(1)
+000cdd 2e5e      	MOV  R5,R30
+                 ; 0000 00BF     }
+                 ; 0000 00C0     else
+000cde c00b      	RJMP _0x16
                  _0x12:
-000cd4 9508      	RET
-                 ; 0000 00C0 }
+                 ; 0000 00C1     {
+                 ; 0000 00C2         OCR2 = 0xFF;
+000cdf efef      	LDI  R30,LOW(255)
+000ce0 d09a      	RCALL SUBOPT_0x2
+                 ; 0000 00C3         TCCR2 = 0b01101100; //start timer
+                 ; 0000 00C4         ledArrowControl(dir, 0);
+000ce1 d0a3      	RCALL SUBOPT_0x4
+                 ; 0000 00C5         while(OCR2 != 0x66)
+                 _0x17:
+000ce2 b5e3      	IN   R30,0x23
+000ce3 36e6      	CPI  R30,LOW(0x66)
+000ce4 f021      	BREQ _0x19
+                 ; 0000 00C6         {
+                 ; 0000 00C7             OCR2--;
+000ce5 b5e3      	IN   R30,0x23
+000ce6 50e1      	SUBI R30,LOW(1)
+000ce7 d099      	RCALL SUBOPT_0x3
+                 ; 0000 00C8             delay_ms(7);
+                 ; 0000 00C9         }
+000ce8 cff9      	RJMP _0x17
+                 _0x19:
+                 ; 0000 00CA         PWMDir = 0;
+000ce9 2455      	CLR  R5
+                 ; 0000 00CB     }
+                 _0x16:
+                 ; 0000 00CC     TCCR2 = 0x00; //stop timer
+000cea e0e0      	LDI  R30,LOW(0)
+000ceb bde5      	OUT  0x25,R30
+                 ; 0000 00CD     OCR2 = 0x00;
+000cec bde3      	OUT  0x23,R30
+                 ; 0000 00CE     if(PWMDir) { PORTB |= PB3;}
+000ced 2055      	TST  R5
+000cee f011      	BREQ _0x1A
+000cef 9ac3      	SBI  0x18,3
+                 ; 0000 00CF     else PORTB &= ~PB3;
+000cf0 c001      	RJMP _0x1B
+                 _0x1A:
+000cf1 98c3      	CBI  0x18,3
+                 ; 0000 00D0     return;
+                 _0x1B:
+000cf2 c010      	RJMP _0x2000001
+                 ; 0000 00D1 }
                  ; .FEND
                  ;
                  ;void goUpDown(char dir) //1 - up, 0 - down
-                 ; 0000 00C3 {
+                 ; 0000 00D4 {
                  _goUpDown:
                  ; .FSTART _goUpDown
-                 ; 0000 00C4    if (dir) PORTB |= PB4;
-000cd5 93aa      	ST   -Y,R26
+                 ; 0000 00D5    if (dir)
+000cf3 93aa      	ST   -Y,R26
                  ;	dir -> Y+0
-000cd6 81e8      	LD   R30,Y
-000cd7 30e0      	CPI  R30,0
-000cd8 f011      	BREQ _0x13
-000cd9 9ac4      	SBI  0x18,4
-                 ; 0000 00C5    else PORTB &= ~PB4;
-000cda c001      	RJMP _0x14
-                 _0x13:
-000cdb 98c4      	CBI  0x18,4
-                 ; 0000 00C6    PWM();
-                 _0x14:
-000cdc dfd3      	RCALL _PWM
-                 ; 0000 00C7    if(statusMotor == 0)
-000cdd 2044      	TST  R4
-000cde f419      	BRNE _0x15
-                 ; 0000 00C8    statusMotor = 1;
-000cdf e0e1      	LDI  R30,LOW(1)
-000ce0 2e4e      	MOV  R4,R30
-                 ; 0000 00C9    else statusMotor = 0;
-000ce1 c001      	RJMP _0x16
-                 _0x15:
-000ce2 2444      	CLR  R4
-                 ; 0000 00CA }
-                 _0x16:
-000ce3 9621      	ADIW R28,1
-000ce4 9508      	RET
+000cf4 81e8      	LD   R30,Y
+000cf5 30e0      	CPI  R30,0
+000cf6 f019      	BREQ _0x1C
+                 ; 0000 00D6     {
+                 ; 0000 00D7         PORTB |= PB4;
+000cf7 9ac4      	SBI  0x18,4
+                 ; 0000 00D8         PWM('u');
+000cf8 e7a5      	LDI  R26,LOW(117)
+000cf9 c002      	RJMP _0x39
+                 ; 0000 00D9     }
+                 ; 0000 00DA    else
+                 _0x1C:
+                 ; 0000 00DB    {
+                 ; 0000 00DC         PORTB &= ~PB4;
+000cfa 98c4      	CBI  0x18,4
+                 ; 0000 00DD         PWM('d');
+000cfb e6a4      	LDI  R26,LOW(100)
+                 _0x39:
+000cfc dfd1      	RCALL _PWM
+                 ; 0000 00DE    }
+                 ; 0000 00DF    if(statusMotor == 0)
+000cfd 2044      	TST  R4
+000cfe f419      	BRNE _0x1E
+                 ; 0000 00E0    statusMotor = 1;
+000cff e0e1      	LDI  R30,LOW(1)
+000d00 2e4e      	MOV  R4,R30
+                 ; 0000 00E1    else statusMotor = 0;
+000d01 c001      	RJMP _0x1F
+                 _0x1E:
+000d02 2444      	CLR  R4
+                 ; 0000 00E2 }
+                 _0x1F:
+                 _0x2000001:
+000d03 9621      	ADIW R28,1
+000d04 9508      	RET
                  ; .FEND
                  ;
                  ;void main()
-                 ; 0000 00CD {
+                 ; 0000 00E5 {
                  _main:
                  ; .FSTART _main
-                 ; 0000 00CE     #asm("cli")
-000ce5 94f8      	cli
-                 ; 0000 00CF     initializationDefolt();
-000ce6 df60      	RCALL _initializationDefolt
-                 ; 0000 00D0     initPWM();
-000ce7 df8a      	RCALL _initPWM
-                 ; 0000 00D1     #asm("sei")
-000ce8 9478      	sei
-                 ; 0000 00D2     while (1)
-                 _0x17:
-                 ; 0000 00D3     {
-                 ; 0000 00D4        if(PINC & (1<<4))
-000ce9 9b9c      	SBIS 0x13,4
-000cea c007      	RJMP _0x1A
-                 ; 0000 00D5        {
-                 ; 0000 00D6             PORTB |= PB7;
-000ceb 9ac7      	SBI  0x18,7
-                 ; 0000 00D7             tampUpStop = false;
-000cec 2499      	CLR  R9
-                 ; 0000 00D8             tampDownStop = false;
-000ced 2488      	CLR  R8
-                 ; 0000 00D9             PORTB &= ~PB3;
-000cee 98c3      	CBI  0x18,3
-                 ; 0000 00DA             statusMotor = 0;
-000cef 2444      	CLR  R4
-                 ; 0000 00DB             PWMDir = 0;
-000cf0 2455      	CLR  R5
-                 ; 0000 00DC        }
-                 ; 0000 00DD        else PORTB &= ~PB7;
-000cf1 c001      	RJMP _0x1B
-                 _0x1A:
-000cf2 98c7      	CBI  0x18,7
-                 ; 0000 00DE     }
-                 _0x1B:
-000cf3 cff5      	RJMP _0x17
-                 ; 0000 00DF }
-                 _0x1C:
-000cf4 cfff      	RJMP _0x1C
+                 ; 0000 00E6     #asm("cli")
+000d05 94f8      	cli
+                 ; 0000 00E7     initializationDefolt();
+000d06 df40      	RCALL _initializationDefolt
+                 ; 0000 00E8     initPWM();
+000d07 df6a      	RCALL _initPWM
+                 ; 0000 00E9     #asm("sei")
+000d08 9478      	sei
+                 ; 0000 00EA     while (1)
+                 _0x20:
+                 ; 0000 00EB     {
+                 ; 0000 00EC        if(PINC & (1<<4))
+000d09 9b9c      	SBIS 0x13,4
+000d0a c00a      	RJMP _0x23
+                 ; 0000 00ED        {
+                 ; 0000 00EE             PORTB |= PB7;
+000d0b 9ac7      	SBI  0x18,7
+                 ; 0000 00EF             tampUpStop = false;
+000d0c 2499      	CLR  R9
+                 ; 0000 00F0             tampDownStop = false;
+000d0d 2488      	CLR  R8
+                 ; 0000 00F1             PORTB &= ~PB3;
+000d0e 98c3      	CBI  0x18,3
+                 ; 0000 00F2             statusMotor = 0;
+000d0f 2444      	CLR  R4
+                 ; 0000 00F3             PWMDir = 0;
+000d10 2455      	CLR  R5
+                 ; 0000 00F4             ledArrowControl('u', false);
+000d11 e7e5      	LDI  R30,LOW(117)
+000d12 93ea      	ST   -Y,R30
+000d13 d071      	RCALL SUBOPT_0x4
+                 ; 0000 00F5        }
+                 ; 0000 00F6        else PORTB &= ~PB7;
+000d14 c001      	RJMP _0x24
+                 _0x23:
+000d15 98c7      	CBI  0x18,7
+                 ; 0000 00F7     }
+                 _0x24:
+000d16 cff2      	RJMP _0x20
+                 ; 0000 00F8 }
+                 _0x25:
+000d17 cfff      	RJMP _0x25
                  ; .FEND
                  ;
                  ;interrupt [EXT_INT0] void exterInt0(void)
-                 ; 0000 00E2 {
+                 ; 0000 00FB {
                  _exterInt0:
                  ; .FSTART _exterInt0
-000cf5 d060      	RCALL SUBOPT_0x3
-                 ; 0000 00E3     if (statusMotor)
-000cf6 f0e9      	BREQ _0x1D
-                 ; 0000 00E4     {
-                 ; 0000 00E5        switch(checkPortPC(2, 3))
-000cf7 e0e2      	LDI  R30,LOW(2)
-000cf8 e0f0      	LDI  R31,HIGH(2)
-000cf9 93fa      	ST   -Y,R31
-000cfa 93ea      	ST   -Y,R30
-000cfb e0a3      	LDI  R26,LOW(3)
-000cfc e0b0      	LDI  R27,0
-000cfd df76      	RCALL _checkPortPC
-                 ; 0000 00E6        {
-                 ; 0000 00E7            case 2:PORTB |= PB5;
-000cfe 30e2      	CPI  R30,LOW(0x2)
-000cff e0a0      	LDI  R26,HIGH(0x2)
-000d00 07fa      	CPC  R31,R26
-000d01 f439      	BRNE _0x21
-000d02 9ac5      	SBI  0x18,5
-                 ; 0000 00E8                statusMotor = 0;
-000d03 2444      	CLR  R4
-                 ; 0000 00E9                PWMDir = false;
-000d04 2455      	CLR  R5
-                 ; 0000 00EA                tampUpStop = true;
-000d05 e0e1      	LDI  R30,LOW(1)
-000d06 2e9e      	MOV  R9,R30
-                 ; 0000 00EB                PORTB &= ~PB3;
-000d07 98c3      	CBI  0x18,3
-                 ; 0000 00EC                break;
-000d08 c00a      	RJMP _0x20
-                 ; 0000 00ED            case 3:
-                 _0x21:
-000d09 30e3      	CPI  R30,LOW(0x3)
-000d0a e0a0      	LDI  R26,HIGH(0x3)
-000d0b 07fa      	CPC  R31,R26
-000d0c f431      	BRNE _0x23
-                 ; 0000 00EE                PORTB |= PB6;
-000d0d 9ac6      	SBI  0x18,6
-                 ; 0000 00EF                statusMotor = 0;
-000d0e 2444      	CLR  R4
-                 ; 0000 00F0                PWMDir = false;
-000d0f 2455      	CLR  R5
-                 ; 0000 00F1                tampDownStop = true;
-000d10 e0e1      	LDI  R30,LOW(1)
-000d11 2e8e      	MOV  R8,R30
-                 ; 0000 00F2                PORTB &= ~PB3;
-000d12 98c3      	CBI  0x18,3
-                 ; 0000 00F3 
-                 ; 0000 00F4                break;
-                 ; 0000 00F5            default: break;
-                 _0x23:
-                 ; 0000 00F6        }
-                 _0x20:
-                 ; 0000 00F7 
-                 ; 0000 00F8     }
-                 ; 0000 00F9     else return;
-000d13 c001      	RJMP _0x24
-                 _0x1D:
-000d14 c024      	RJMP _0x30
-                 ; 0000 00FA 
-                 ; 0000 00FB }
-                 _0x24:
-000d15 c023      	RJMP _0x30
+000d18 d06e      	RCALL SUBOPT_0x5
+                 ; 0000 00FC     if (statusMotor)
+000d19 f119      	BREQ _0x26
+                 ; 0000 00FD     {
+                 ; 0000 00FE        switch(checkPortPC(2, 3))
+000d1a e0e2      	LDI  R30,LOW(2)
+000d1b e0f0      	LDI  R31,HIGH(2)
+000d1c 93fa      	ST   -Y,R31
+000d1d 93ea      	ST   -Y,R30
+000d1e e0a3      	LDI  R26,LOW(3)
+000d1f e0b0      	LDI  R27,0
+000d20 df71      	RCALL _checkPortPC
+                 ; 0000 00FF        {
+                 ; 0000 0100            case 2:PORTB |= PB5;
+000d21 30e2      	CPI  R30,LOW(0x2)
+000d22 e0a0      	LDI  R26,HIGH(0x2)
+000d23 07fa      	CPC  R31,R26
+000d24 f451      	BRNE _0x2A
+000d25 9ac5      	SBI  0x18,5
+                 ; 0000 0101                statusMotor = 0;
+000d26 2444      	CLR  R4
+                 ; 0000 0102                PWMDir = false;
+000d27 2455      	CLR  R5
+                 ; 0000 0103                tampUpStop = true;
+000d28 e0e1      	LDI  R30,LOW(1)
+000d29 2e9e      	MOV  R9,R30
+                 ; 0000 0104                PORTB &= ~PB3;
+000d2a 98c3      	CBI  0x18,3
+                 ; 0000 0105                ledArrowControl('u', false);
+000d2b e7e5      	LDI  R30,LOW(117)
+000d2c 93ea      	ST   -Y,R30
+000d2d d057      	RCALL SUBOPT_0x4
+                 ; 0000 0106                break;
+000d2e c00d      	RJMP _0x29
+                 ; 0000 0107            case 3:
+                 _0x2A:
+000d2f 30e3      	CPI  R30,LOW(0x3)
+000d30 e0a0      	LDI  R26,HIGH(0x3)
+000d31 07fa      	CPC  R31,R26
+000d32 f449      	BRNE _0x2C
+                 ; 0000 0108                PORTB |= PB6;
+000d33 9ac6      	SBI  0x18,6
+                 ; 0000 0109                statusMotor = 0;
+000d34 2444      	CLR  R4
+                 ; 0000 010A                PWMDir = false;
+000d35 2455      	CLR  R5
+                 ; 0000 010B                tampDownStop = true;
+000d36 e0e1      	LDI  R30,LOW(1)
+000d37 2e8e      	MOV  R8,R30
+                 ; 0000 010C                PORTB &= ~PB3;
+000d38 98c3      	CBI  0x18,3
+                 ; 0000 010D                ledArrowControl('d', false);
+000d39 e6e4      	LDI  R30,LOW(100)
+000d3a 93ea      	ST   -Y,R30
+000d3b d049      	RCALL SUBOPT_0x4
+                 ; 0000 010E                break;
+                 ; 0000 010F            default: break;
+                 _0x2C:
+                 ; 0000 0110        }
+                 _0x29:
+                 ; 0000 0111 
+                 ; 0000 0112     }
+                 ; 0000 0113     else return;
+000d3c c001      	RJMP _0x2D
+                 _0x26:
+000d3d c024      	RJMP _0x3A
+                 ; 0000 0114 
+                 ; 0000 0115 }
+                 _0x2D:
+000d3e c023      	RJMP _0x3A
                  ; .FEND
                  ;
                  ;interrupt [EXT_INT1] void exterInt1(void)     // interupt buttom control
-                 ; 0000 00FE {
+                 ; 0000 0118 {
                  _exterInt1:
                  ; .FSTART _exterInt1
-000d16 d03f      	RCALL SUBOPT_0x3
-                 ; 0000 00FF 
-                 ; 0000 0100         if(!statusMotor) {numButtom = checkPortPC(0, 1);}
-000d17 f441      	BRNE _0x25
-000d18 e0e0      	LDI  R30,LOW(0)
-000d19 e0f0      	LDI  R31,HIGH(0)
-000d1a 93fa      	ST   -Y,R31
-000d1b 93ea      	ST   -Y,R30
-000d1c e0a1      	LDI  R26,LOW(1)
-000d1d e0b0      	LDI  R27,0
-000d1e df55      	RCALL _checkPortPC
-000d1f 013f      	MOVW R6,R30
-                 ; 0000 0101 
-                 ; 0000 0102         switch(numButtom)
-                 _0x25:
-000d20 01f3      	MOVW R30,R6
-                 ; 0000 0103         {
-                 ; 0000 0104             case 0:
-000d21 9730      	SBIW R30,0
-000d22 f449      	BRNE _0x29
-                 ; 0000 0105 
-                 ; 0000 0106                 if(tampUpStop) return;
-000d23 2099      	TST  R9
-000d24 f4a1      	BRNE _0x30
-                 ; 0000 0107                 else
-                 ; 0000 0108                 {
-                 ; 0000 0109                     PORTD |= PD7;
-000d25 9a97      	SBI  0x12,7
-                 ; 0000 010A                     tampDownStop = false;
-000d26 2488      	CLR  R8
-                 ; 0000 010B                     PORTB &= ~PB6;
-000d27 98c6      	CBI  0x18,6
-                 ; 0000 010C                     goUpDown(1);
-000d28 e0a1      	LDI  R26,LOW(1)
-000d29 dfab      	RCALL _goUpDown
-                 ; 0000 010D                     PORTD &= ~PD7;
-000d2a 9897      	CBI  0x12,7
-                 ; 0000 010E                 }
-                 ; 0000 010F 
-                 ; 0000 0110                 break;
-000d2b c00d      	RJMP _0x28
-                 ; 0000 0111             case 1:
-                 _0x29:
-000d2c 30e1      	CPI  R30,LOW(0x1)
-000d2d e0a0      	LDI  R26,HIGH(0x1)
-000d2e 07fa      	CPC  R31,R26
-000d2f f439      	BRNE _0x2F
-                 ; 0000 0112 
-                 ; 0000 0113                 if(tampDownStop) return;
-000d30 2088      	TST  R8
-000d31 f439      	BRNE _0x30
-                 ; 0000 0114                 else
-                 ; 0000 0115                 {
-                 ; 0000 0116                     tampUpStop = false;
-000d32 2499      	CLR  R9
-                 ; 0000 0117                     PORTB &= ~PB5;
-000d33 98c5      	CBI  0x18,5
-                 ; 0000 0118                     goUpDown(0);
-000d34 e0a0      	LDI  R26,LOW(0)
-000d35 df9f      	RCALL _goUpDown
-                 ; 0000 0119                 }
-                 ; 0000 011A                 break;
-000d36 c002      	RJMP _0x28
+000d3f d047      	RCALL SUBOPT_0x5
+                 ; 0000 0119 
+                 ; 0000 011A         if(!statusMotor) {numButtom = checkPortPC(0, 1);}
+000d40 f441      	BRNE _0x2E
+000d41 e0e0      	LDI  R30,LOW(0)
+000d42 e0f0      	LDI  R31,HIGH(0)
+000d43 93fa      	ST   -Y,R31
+000d44 93ea      	ST   -Y,R30
+000d45 e0a1      	LDI  R26,LOW(1)
+000d46 e0b0      	LDI  R27,0
+000d47 df4a      	RCALL _checkPortPC
+000d48 013f      	MOVW R6,R30
                  ; 0000 011B 
-                 ; 0000 011C             default:{PORTD |= PD6;PORTD &= ~PD6;break;}
-                 _0x2F:
-000d37 9a96      	SBI  0x12,6
-000d38 9896      	CBI  0x12,6
-                 ; 0000 011D         }
-                 _0x28:
-                 ; 0000 011E 
-                 ; 0000 011F }
-                 _0x30:
-000d39 91e9      	LD   R30,Y+
-000d3a bfef      	OUT  SREG,R30
-000d3b 91f9      	LD   R31,Y+
-000d3c 91e9      	LD   R30,Y+
-000d3d 91b9      	LD   R27,Y+
-000d3e 91a9      	LD   R26,Y+
-000d3f 9199      	LD   R25,Y+
-000d40 9189      	LD   R24,Y+
-000d41 9179      	LD   R23,Y+
-000d42 9169      	LD   R22,Y+
-000d43 90f9      	LD   R15,Y+
-000d44 9019      	LD   R1,Y+
-000d45 9009      	LD   R0,Y+
-000d46 9518      	RETI
+                 ; 0000 011C         switch(numButtom)
+                 _0x2E:
+000d49 01f3      	MOVW R30,R6
+                 ; 0000 011D         {
+                 ; 0000 011E             case 0:
+000d4a 9730      	SBIW R30,0
+000d4b f449      	BRNE _0x32
+                 ; 0000 011F 
+                 ; 0000 0120                 if(tampUpStop) return;
+000d4c 2099      	TST  R9
+000d4d f4a1      	BRNE _0x3A
+                 ; 0000 0121                 else
+                 ; 0000 0122                 {
+                 ; 0000 0123                     PORTD |= PD7;
+000d4e 9a97      	SBI  0x12,7
+                 ; 0000 0124                     tampDownStop = false;
+000d4f 2488      	CLR  R8
+                 ; 0000 0125                     PORTB &= ~PB6;
+000d50 98c6      	CBI  0x18,6
+                 ; 0000 0126                     goUpDown(1);
+000d51 e0a1      	LDI  R26,LOW(1)
+000d52 dfa0      	RCALL _goUpDown
+                 ; 0000 0127                     PORTD &= ~PD7;
+000d53 9897      	CBI  0x12,7
+                 ; 0000 0128                 }
+                 ; 0000 0129 
+                 ; 0000 012A                 break;
+000d54 c00d      	RJMP _0x31
+                 ; 0000 012B             case 1:
+                 _0x32:
+000d55 30e1      	CPI  R30,LOW(0x1)
+000d56 e0a0      	LDI  R26,HIGH(0x1)
+000d57 07fa      	CPC  R31,R26
+000d58 f439      	BRNE _0x38
+                 ; 0000 012C 
+                 ; 0000 012D                 if(tampDownStop) return;
+000d59 2088      	TST  R8
+000d5a f439      	BRNE _0x3A
+                 ; 0000 012E                 else
+                 ; 0000 012F                 {
+                 ; 0000 0130                     tampUpStop = false;
+000d5b 2499      	CLR  R9
+                 ; 0000 0131                     PORTB &= ~PB5;
+000d5c 98c5      	CBI  0x18,5
+                 ; 0000 0132                     goUpDown(0);
+000d5d e0a0      	LDI  R26,LOW(0)
+000d5e df94      	RCALL _goUpDown
+                 ; 0000 0133                 }
+                 ; 0000 0134                 break;
+000d5f c002      	RJMP _0x31
+                 ; 0000 0135 
+                 ; 0000 0136             default:{PORTD |= PD6;PORTD &= ~PD6;break;}
+                 _0x38:
+000d60 9a96      	SBI  0x12,6
+000d61 9896      	CBI  0x12,6
+                 ; 0000 0137         }
+                 _0x31:
+                 ; 0000 0138 
+                 ; 0000 0139 }
+                 _0x3A:
+000d62 91e9      	LD   R30,Y+
+000d63 bfef      	OUT  SREG,R30
+000d64 91f9      	LD   R31,Y+
+000d65 91e9      	LD   R30,Y+
+000d66 91b9      	LD   R27,Y+
+000d67 91a9      	LD   R26,Y+
+000d68 9199      	LD   R25,Y+
+000d69 9189      	LD   R24,Y+
+000d6a 9179      	LD   R23,Y+
+000d6b 9169      	LD   R22,Y+
+000d6c 90f9      	LD   R15,Y+
+000d6d 9019      	LD   R1,Y+
+000d6e 9009      	LD   R0,Y+
+000d6f 9518      	RETI
                  ; .FEND
                  
                  	.CSEG
                  ;OPTIMIZER ADDED SUBROUTINE, CALLED 2 TIMES, CODE SIZE REDUCTION:5 WORDS
                  SUBOPT_0x0:
-000d47 e0e0      	LDI  R30,LOW(0)
-000d48 bde2      	OUT  0x22,R30
-000d49 bde5      	OUT  0x25,R30
-000d4a bde4      	OUT  0x24,R30
-000d4b bde3      	OUT  0x23,R30
-000d4c 9508      	RET
+000d70 e0e0      	LDI  R30,LOW(0)
+000d71 bde2      	OUT  0x22,R30
+000d72 bde5      	OUT  0x25,R30
+000d73 bde4      	OUT  0x24,R30
+000d74 bde3      	OUT  0x23,R30
+000d75 9508      	RET
                  
                  ;OPTIMIZER ADDED SUBROUTINE, CALLED 2 TIMES, CODE SIZE REDUCTION:1 WORDS
                  SUBOPT_0x1:
-000d4d b212      	IN   R1,18
-000d4e 81ee      	LDD  R30,Y+6
-000d4f e0a1      	LDI  R26,LOW(1)
-000d50 d01e      	RCALL __LSLB12
-000d51 9508      	RET
+000d76 b212      	IN   R1,18
+000d77 81ee      	LDD  R30,Y+6
+000d78 e0a1      	LDI  R26,LOW(1)
+000d79 d026      	RCALL __LSLB12
+000d7a 9508      	RET
+                 
+                 ;OPTIMIZER ADDED SUBROUTINE, CALLED 2 TIMES, CODE SIZE REDUCTION:2 WORDS
+                 SUBOPT_0x2:
+000d7b bde3      	OUT  0x23,R30
+000d7c e6ec      	LDI  R30,LOW(108)
+000d7d bde5      	OUT  0x25,R30
+000d7e 81e8      	LD   R30,Y
+000d7f 93ea      	ST   -Y,R30
+000d80 9508      	RET
                  
                  ;OPTIMIZER ADDED SUBROUTINE, CALLED 2 TIMES, CODE SIZE REDUCTION:1 WORDS
-                 SUBOPT_0x2:
-000d52 bde3      	OUT  0x23,R30
-000d53 e0a7      	LDI  R26,LOW(7)
-000d54 e0b0      	LDI  R27,0
-000d55 c00f      	RJMP _delay_ms
+                 SUBOPT_0x3:
+000d81 bde3      	OUT  0x23,R30
+000d82 e0a7      	LDI  R26,LOW(7)
+000d83 e0b0      	LDI  R27,0
+000d84 c011      	RJMP _delay_ms
+                 
+                 ;OPTIMIZER ADDED SUBROUTINE, CALLED 4 TIMES, CODE SIZE REDUCTION:1 WORDS
+                 SUBOPT_0x4:
+000d85 e0a0      	LDI  R26,LOW(0)
+000d86 ceed      	RJMP _ledArrowControl
                  
                  ;OPTIMIZER ADDED SUBROUTINE, CALLED 2 TIMES, CODE SIZE REDUCTION:11 WORDS
-                 SUBOPT_0x3:
-000d56 920a      	ST   -Y,R0
-000d57 921a      	ST   -Y,R1
-000d58 92fa      	ST   -Y,R15
-000d59 936a      	ST   -Y,R22
-000d5a 937a      	ST   -Y,R23
-000d5b 938a      	ST   -Y,R24
-000d5c 939a      	ST   -Y,R25
-000d5d 93aa      	ST   -Y,R26
-000d5e 93ba      	ST   -Y,R27
-000d5f 93ea      	ST   -Y,R30
-000d60 93fa      	ST   -Y,R31
-000d61 b7ef      	IN   R30,SREG
-000d62 93ea      	ST   -Y,R30
-000d63 2044      	TST  R4
-000d64 9508      	RET
+                 SUBOPT_0x5:
+000d87 920a      	ST   -Y,R0
+000d88 921a      	ST   -Y,R1
+000d89 92fa      	ST   -Y,R15
+000d8a 936a      	ST   -Y,R22
+000d8b 937a      	ST   -Y,R23
+000d8c 938a      	ST   -Y,R24
+000d8d 939a      	ST   -Y,R25
+000d8e 93aa      	ST   -Y,R26
+000d8f 93ba      	ST   -Y,R27
+000d90 93ea      	ST   -Y,R30
+000d91 93fa      	ST   -Y,R31
+000d92 b7ef      	IN   R30,SREG
+000d93 93ea      	ST   -Y,R30
+000d94 2044      	TST  R4
+000d95 9508      	RET
                  
                  
                  	.CSEG
                  _delay_ms:
-000d65 9610      	adiw r26,0
-000d66 f039      	breq __delay_ms1
+000d96 9610      	adiw r26,0
+000d97 f039      	breq __delay_ms1
                  __delay_ms0:
                 +
-000d67 ef8a     +LDI R24 , LOW ( 0xFA )
-000d68 e090     +LDI R25 , HIGH ( 0xFA )
+000d98 ef8a     +LDI R24 , LOW ( 0xFA )
+000d99 e090     +LDI R25 , HIGH ( 0xFA )
                 +__DELAY_USW_LOOP :
-000d69 9701     +SBIW R24 , 1
-000d6a f7f1     +BRNE __DELAY_USW_LOOP
+000d9a 9701     +SBIW R24 , 1
+000d9b f7f1     +BRNE __DELAY_USW_LOOP
                  	__DELAY_USW 0xFA
-000d6b 95a8      	wdr
-000d6c 9711      	sbiw r26,1
-000d6d f7c9      	brne __delay_ms0
+000d9c 95a8      	wdr
+000d9d 9711      	sbiw r26,1
+000d9e f7c9      	brne __delay_ms0
                  __delay_ms1:
-000d6e 9508      	ret
+000d9f 9508      	ret
                  
                  __LSLB12:
-000d6f 23ee      	TST  R30
-000d70 2e0e      	MOV  R0,R30
-000d71 2fea      	MOV  R30,R26
-000d72 f019      	BREQ __LSLB12R
+000da0 23ee      	TST  R30
+000da1 2e0e      	MOV  R0,R30
+000da2 2fea      	MOV  R30,R26
+000da3 f019      	BREQ __LSLB12R
                  __LSLB12L:
-000d73 0fee      	LSL  R30
-000d74 940a      	DEC  R0
-000d75 f7e9      	BRNE __LSLB12L
+000da4 0fee      	LSL  R30
+000da5 940a      	DEC  R0
+000da6 f7e9      	BRNE __LSLB12L
                  __LSLB12R:
-000d76 9508      	RET
+000da7 9508      	RET
                  
                  __LSLW12:
-000d77 23ee      	TST  R30
-000d78 2e0e      	MOV  R0,R30
-000d79 01fd      	MOVW R30,R26
-000d7a f021      	BREQ __LSLW12R
+000da8 23ee      	TST  R30
+000da9 2e0e      	MOV  R0,R30
+000daa 01fd      	MOVW R30,R26
+000dab f021      	BREQ __LSLW12R
                  __LSLW12L:
-000d7b 0fee      	LSL  R30
-000d7c 1fff      	ROL  R31
-000d7d 940a      	DEC  R0
-000d7e f7e1      	BRNE __LSLW12L
+000dac 0fee      	LSL  R30
+000dad 1fff      	ROL  R31
+000dae 940a      	DEC  R0
+000daf f7e1      	BRNE __LSLW12L
                  __LSLW12R:
-000d7f 9508      	RET
+000db0 9508      	RET
                  
                  __SAVELOCR4:
-000d80 933a      	ST   -Y,R19
+000db1 933a      	ST   -Y,R19
                  __SAVELOCR3:
-000d81 932a      	ST   -Y,R18
+000db2 932a      	ST   -Y,R18
                  __SAVELOCR2:
-000d82 931a      	ST   -Y,R17
-000d83 930a      	ST   -Y,R16
-000d84 9508      	RET
+000db3 931a      	ST   -Y,R17
+000db4 930a      	ST   -Y,R16
+000db5 9508      	RET
                  
                  __LOADLOCR4:
-000d85 813b      	LDD  R19,Y+3
+000db6 813b      	LDD  R19,Y+3
                  __LOADLOCR3:
-000d86 812a      	LDD  R18,Y+2
+000db7 812a      	LDD  R18,Y+2
                  __LOADLOCR2:
-000d87 8119      	LDD  R17,Y+1
-000d88 8108      	LD   R16,Y
-000d89 9508      	RET
+000db8 8119      	LDD  R17,Y+1
+000db9 8108      	LD   R16,Y
+000dba 9508      	RET
                  
                  ;END OF CODE MARKER
                  __END_OF_CODE:
@@ -1969,37 +2063,37 @@ ATmega8 register use summary:
 r0 :  10 r1 :   8 r2 :   0 r3 :   0 r4 :   7 r5 :   7 r6 :   2 r7 :   0 
 r8 :   4 r9 :   4 r10:   0 r11:   0 r12:   0 r13:   0 r14:   0 r15:   2 
 r16:   5 r17:   4 r18:   5 r19:   5 r20:   0 r21:   0 r22:   4 r23:   2 
-r24:  11 r25:   5 r26:  28 r27:  13 r28:   3 r29:   1 r30: 135 r31:  24 
-x  :   3 y  :  54 z  :   7 
+r24:  11 r25:   5 r26:  38 r27:  13 r28:   4 r29:   1 r30: 153 r31:  27 
+x  :   3 y  :  64 z  :   7 
 Registers used: 25 out of 35 (71.4%)
 
 ATmega8 instruction use summary:
 .lds  :   0 .lds.l:   0 .sts  :   0 .sts.l:   0 adc   :   0 add   :   0 
-adiw  :   4 and   :   3 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 
-brbc  :   0 brbs  :   0 brcc  :   0 brcs  :   0 break :   0 breq  :  10 
+adiw  :   5 and   :   3 andi  :   2 asr   :   0 bclr  :   0 bld   :   0 
+brbc  :   0 brbs  :   0 brcc  :   0 brcs  :   0 break :   0 breq  :  12 
 brge  :   0 brhc  :   0 brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 
-brlt  :   1 brmi  :   0 brne  :  17 brpl  :   0 brsh  :   0 brtc  :   0 
+brlt  :   1 brmi  :   0 brne  :  19 brpl  :   0 brsh  :   0 brtc  :   0 
 brts  :   0 brvc  :   0 brvs  :   0 bset  :   0 bst   :   0 cbi   :  11 
 cbr   :   0 clc   :   0 clh   :   0 cli   :   2 cln   :   0 clr   :  14 
 cls   :   0 clt   :   0 clv   :   0 clz   :   0 com   :   2 cp    :   2 
-cpc   :   5 cpi   :   6 cpse  :   0 dec   :   3 des   :   0 eor   :   0 
-fmul  :   0 fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   8 
-inc   :   0 ld    :  14 ldd   :  15 ldi   :  63 lds   :   0 lpm   :   7 
+cpc   :   7 cpi   :  10 cpse  :   0 dec   :   3 des   :   0 eor   :   0 
+fmul  :   0 fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :  10 
+inc   :   0 ld    :  17 ldd   :  16 ldi   :  72 lds   :   0 lpm   :   7 
 lsl   :   2 lsr   :   0 mov   :   9 movw  :   7 mul   :   0 muls  :   0 
 mulsu :   0 neg   :   0 nop   :   0 or    :   1 ori   :   1 out   :  48 
-pop   :   0 push  :   0 rcall :  19 ret   :  13 reti  :   1 rjmp  :  40 
-rol   :   1 ror   :   0 sbc   :   0 sbci  :   1 sbi   :   8 sbic  :   0 
+pop   :   0 push  :   0 rcall :  26 ret   :  14 reti  :   1 rjmp  :  45 
+rol   :   1 ror   :   0 sbc   :   0 sbci  :   1 sbi   :  10 sbic  :   0 
 sbis  :   1 sbiw  :   7 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 
 seh   :   0 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 
-sev   :   0 sez   :   0 sleep :   0 spm   :   0 st    :  26 std   :   2 
+sev   :   0 sez   :   0 sleep :   0 spm   :   0 st    :  32 std   :   2 
 sts   :   0 sub   :   0 subi  :   3 swap  :   0 tst   :   8 wdr   :   1 
 
-Instructions used: 39 out of 114 (34.2%)
+Instructions used: 40 out of 114 (35.1%)
 
 ATmega8 memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x001800 0x001b14    774     14    788    8192   9.6%
+[.cseg] 0x001800 0x001b76    872     14    886    8192  10.8%
 [.dseg] 0x000060 0x000160      0      0      0    1024   0.0%
 [.eseg] 0x000000 0x000000      0      0      0     512   0.0%
 
