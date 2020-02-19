@@ -307,7 +307,7 @@ interrupt [EXT_INT1] void exterInt1(void)     // interupt buttom control
                 }
                 break;
 
-            default:{PORTD |= PD6;PORTD &= ~PD6;break;}
+            default:{break;}
         }
 
 }

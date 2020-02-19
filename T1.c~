@@ -143,8 +143,10 @@ void ledArrowControl(char dir, bool onOff)
     {
         case 'u': if (onOff) PORTB |= PB0;
                 else PORTB &= ~((1<<0)|(1<<1));
+                break;
         case 'd': if (onOff) PORTB |= PB1;
                 else PORTB &= ~((1<<0)|(1<<1));
+                break;
     }
 }
 
@@ -172,14 +174,14 @@ unsigned int checkPortPC(int i, int n)
        PORTD &= ~PD4;return 255;}
 }
 
-void PWM(char d)
+void PWM(char dir)
 {
 
     if(PWMDir == 0)
     {
         OCR2 = 0x66;
         TCCR2 = 0b01101100; //start timer
-        ledArrowControl(d, true);
+        ledArrowControl(dir, 1);
         while(OCR2 != 0xFF)
         {
             OCR2++;
@@ -191,7 +193,7 @@ void PWM(char d)
     {
         OCR2 = 0xFF;
         TCCR2 = 0b01101100; //start timer
-        ledArrowControl(d, false);
+        ledArrowControl(dir, 0);
         while(OCR2 != 0x66)
         {
             OCR2--;
