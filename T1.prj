@@ -26,7 +26,7 @@ Active0=0
 EditorPanel0=0
 PageIndex0=0
 EditorPanel1=0
-TimeStamp1=1347556060
+TimeStamp1=1347664786
 PageIndex1=1
 F1=T1.c
 TimeStamp0=1347009668
@@ -506,7 +506,7 @@ Column=0
 ScrollPosX=0
 ScrollPosY=0
 <<<<<<< HEAD
-TimeStamp=1347556167
+TimeStamp=1350172789
 =======
 TimeStamp=1346724737
 >>>>>>> parent of 21ed162... Движение тележки готово
@@ -518,11 +518,11 @@ F3=pwm.c
 F4=E:\GitHub\Control-mechanical-cart\T1.h
 [Bookmarks1]
 <<<<<<< HEAD
-TimeStamp=1347556060
-Row=148
-Column=22
+TimeStamp=1347664786
+Row=309
+Column=21
 ScrollPosX=0
-ScrollPosY=33
+ScrollPosY=177
 =======
 TimeStamp=1346723968
 Row=224
@@ -613,5 +613,4 @@ F3=C:\Program Files (x86)\CodeVisionAVR\inc\io.h
 F4=C:\Program Files (x86)\CodeVisionAVR\inc\delay.h
 F5=C:\Program Files (x86)\CodeVisionAVR\inc\stdbool.h
 [FoldedCode1]
-Line1=35
-Blocks=1
+Blocks=0
